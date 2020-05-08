@@ -1,0 +1,11 @@
+body {
+  margin: 0;
+}
+
+@media (environment-blending: additive) {
+  body { background-color: transparent; }
+}
+
+canvas {
+	display: block;
+}
