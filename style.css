@@ -6,6 +6,16 @@ body {
   body { background-color: transparent; }
 }
 
-canvas {
-	display: block;
+#overlay > div > button {
+	position: absolute;
+	z-index: 2;
+	right:10;
+	bottom:10;
+	height: 20px;
+	background: transparent;
+	color: #ffffff;
+	outline: 1px solid #ffffff;
+	border: 0px;
+	opacity: 1;
 }
+
