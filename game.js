@@ -12,7 +12,7 @@ var Y = 1;
 var Z = 2;
 
 var isActive = 1;
-var debug = 1;
+var debug = 0;
 var debug_mode1 = 0;
 var camera_default_x;
 var camera_default_y;
@@ -133,6 +133,7 @@ var directionalLight;
 var lightHelper, shadowCameraHelper;
 
 //local
+/*
 import { MMDLoader } from './three.js-master/examples/jsm/loaders/MMDLoader.js';
 import { MMDAnimationHelper } from './three.js-master/examples/jsm/animation/MMDAnimationHelper.js';
 import { OutlineEffect } from './three.js-master/examples/jsm/effects/OutlineEffect.js';
@@ -140,8 +141,8 @@ import { MMDPhysics } from './three.js-master/examples/jsm/animation/MMDPhysics.
 import { VRButton } from './three.js-master/examples/jsm/webxr/VRButton.js';
 import { XRControllerModelFactory } from './three.js-master/examples/jsm/webxr/XRControllerModelFactory.js';
 import { Reflector } from './three.js-master/examples/jsm/objects/Reflector.js';
+*/
 //online
-/*
 import { MMDLoader } from 'https://threejs.org/examples/jsm/loaders/MMDLoader.js';
 import { MMDAnimationHelper } from 'https://threejs.org/examples/jsm/animation/MMDAnimationHelper.js';
 import { OutlineEffect } from 'https://threejs.org/examples/jsm/effects/OutlineEffect.js';
@@ -149,7 +150,7 @@ import { MMDPhysics } from 'https://threejs.org/examples/jsm/animation/MMDPhysic
 import { VRButton } from 'https://threejs.org/examples/jsm/webxr/VRButton.js';
 import { XRControllerModelFactory } from 'https://threejs.org/examples/jsm/webxr/XRControllerModelFactory.js';
 import { Reflector } from 'https://threejs.org/examples/jsm/objects/Reflector.js';
-*/
+
 
 var modelFile = "./okzmmd/okz.pmx";
 //var modelFile = "./syaro/extra.pmx";
