@@ -58,6 +58,7 @@ var user;
 var eye_texture;
 var loading_count = 0;
 
+
 var astro_layer = new Array(3*10);
 var action_type=1;
 var action_count=0;
@@ -77,6 +78,8 @@ const ACTION_TERE		= action_type++;	//照れ
 const ACTION_GOMEN		= action_type++;	//ごめん
 const ACTION_SACHIKO	= action_type++;	//謎スマイル
 const ACTION_SKIRT		= action_type++;	//スカートすそ直し
+const ACTION_MEGANE_ON	= action_type++;	//まぁまぁ眼鏡どうぞ
+const ACTION_MEGANE_OFF	= action_type++;	//外す
 
 action_type=0;
 
@@ -127,6 +130,7 @@ var INTERSECTED;
 var polyfill = new WebXRPolyfill();
 
 var near_mode = 0;
+var megane_on = 0;
 
 var pointLight;
 var directionalLight;
@@ -167,6 +171,7 @@ var objFiles = [
 	"sakura/sakura.pmx",
 //	"watch/watch1.pmx",
 	"marusofa/marusofa.pmx",
+	"megane/megane.pmx",
 //	"sachiko/sachiko.pmx",
 ];
 //vmdのファイルPATHとそれに対応するタグの配列
@@ -179,7 +184,8 @@ const OBJ_PROJECTOR = objNum++;		//投影機
 const OBJ_WALL = objNum++;			//壁
 const OBJ_SAKURA = objNum++;		//桜髪飾り
 //const OBJ_WATCH = objNum++;		//腕時計
-const OBJ_SOFA = objNum;			//ソファ
+const OBJ_SOFA = objNum++;			//ソファ
+const OBJ_MEGANE = objNum++;			//めがね
 
 /*onload = function()*/{
 
@@ -273,6 +279,8 @@ function init() {
 	chr_y = chr_default_y = camera_y - 19;
 	chr_z = chr_default_z = camera_z + 0;
 
+	//test
+//	camera_x += -10;
 	// 箱を作成
 /*	var texture = new THREE.TextureLoader().load( 'test.png' );
 
@@ -652,6 +660,9 @@ function LoadingDisp() {
 var adj_x=0;
 var adj_y=0;
 var adj_z=0;
+var adj2_x=0;
+var adj2_y=0;
+var adj2_z=0;
 var tickCount = 0;
 
 function my_update() {
@@ -799,7 +810,8 @@ function my_update() {
 	{
 		if(debug) {
 			document.getElementById("debugOut").innerHTML = "";
-			document.getElementById("debugOut").innerHTML = "adj "+adj_x+","+adj_y+","+adj_z+"<br>";
+			document.getElementById("debugOut").innerHTML = "adj1 "+adj_x+","+adj_y+","+adj_z+"<br>";
+			document.getElementById("debugOut").innerHTML += "adj2 "+adj2_x+","+adj2_y+","+adj2_z+"<br>";
 		}
 	count++;
 	tickCount -= 1.0/60.0;
@@ -807,12 +819,22 @@ function my_update() {
 		helper.update( 0.0166 );
 	}
 	if(debug) {
+		if(key_shift == false) {
 		if(!old_q && key_q) adj_x += 0.02;
 		if(!old_a && key_a) adj_x -= 0.02;
 		if(!old_w && key_w) adj_y += 0.02;
 		if(!old_s && key_s) adj_y -= 0.02;
 		if(!old_e && key_e) adj_z += 0.02;
 		if(!old_d && key_d) adj_z -= 0.02;
+		}
+		else {
+		if(!old_q && key_q) adj2_x += 0.02;
+		if(!old_a && key_a) adj2_x -= 0.02;
+		if(!old_w && key_w) adj2_y += 0.02;
+		if(!old_s && key_s) adj2_y -= 0.02;
+		if(!old_e && key_e) adj2_z += 0.02;
+		if(!old_d && key_d) adj2_z -= 0.02;
+		}
 
 		if(!old_sp && key_sp) {
 			debug_mode1 = !debug_mode1;
@@ -862,16 +884,19 @@ function my_update() {
 	var free_koyubi = 0;
 	var near_neck_r = 0.6 + Math.sin(count/180) / 8.0;
 	var near_neck_up = -0.1;
+
 	if(near_mode != 0) {
 		neck_r = near_neck_r;
 		neck_up = near_neck_up;
 	}
+	//手に眼鏡
+	var hand_megane = 0;	//1:マトリクス回転あり 2:マトリクス回転なし
 	//目の向き
 	var eye_xr = 0;
 	var eye_yr = neck_r/10;
 	//前屈み
 	var kagami = 0;
-		
+	
 	var mata = 1;	//股開き
 	//ひざ
 	var knee_xl = 0.65;	//X軸曲げ
@@ -984,6 +1009,17 @@ function my_update() {
 				}
 				random_count -= count;
 			}
+			//まぁまぁ眼鏡どうぞ
+			if(megane_on) {
+				if(Lot(4)) {
+					action_type = ACTION_MEGANE_OFF;
+					action_count = 0;
+				}
+			}
+			else if(Lot(5)) {
+				action_type = ACTION_MEGANE_ON;
+				action_count = 0;
+			}
 			//スカートすそ
 			if(Lot(2)) {
 				action_type = ACTION_SKIRT;
@@ -1037,7 +1073,7 @@ function my_update() {
 				}
 			}
 			//すり寄り
-			else if(Lot(1+debug*0)) {
+			else if(Lot(1)) {
 				action_type = ACTION_NEAR_START;
 				action_count = 0;
 			}
@@ -1180,8 +1216,8 @@ function my_update() {
 				smile = (300-action_count) / 30;
 			smile = Math.sin(smile*Math.PI/2);
 		}
-//		smile=1;
-		chr_mesh.morphTargetInfluences[ FACE_MABATAKI ] *= (1.0-aiduchi);
+		if(action_count < 300-90)
+			chr_mesh.morphTargetInfluences[ FACE_MABATAKI ] *= (1.0-aiduchi);
 		chr_mesh.morphTargetInfluences[ FACE_MABATAKI ] *= (1.0-smile);	//消す
 		chr_mesh.morphTargetInfluences[ FACE_WARAU ] += smile;
 		chr_mesh.morphTargetInfluences[ FACE_A ] = 0.1*smile;
@@ -2009,6 +2045,129 @@ function my_update() {
 			ActionEnd();
 		}
 		break;
+
+	case ACTION_MEGANE_ON:
+	case ACTION_MEGANE_OFF:
+		var count2 = 0;
+		var adjp = 0;	//PHASE
+		var adj = 0;	//調整対象
+		var mot_rot = [
+			//さぐる
+			[
+				[-0.60, 0.00, 0.4 ],	//左肩
+				[-0.00, 2.50, 0.00],	//左ひじ
+				[ 0.00, 0.00, 0.60],	//左手首
+				[-0.0 , 0.0 , 0.9 ],	//右肩
+				[-0.60, 0.60, 0.00],	//右ひじ
+				[ 0.00, 0.02, 0.50],	//右手首
+			],
+			//定位置
+			[
+				[-0.60,-1.00, 0.40],	//左肩
+				[ 0.20, 2.50,-0.16],	//左ひじ
+				[ 0.00, 0.00,-0.90],	//左手首
+				[-0.60,-1.00, 0.40],	//右肩
+				[ 0.10, 2.40,-0.16],	//右ひじ
+				[ 0.20, 0.00,-0.90],	//右手首
+			],
+			//眼鏡どうぞ
+			[
+				[-1.80,-1.0 , 0.40],	//左肩
+				[ 0.20, 2.70,-0.66],	//左ひじ
+				[ 0.20, 0.00,-0.30],	//左手首
+				[-1.80,-1.0 , 0.40],	//右肩
+				[ 0.10, 2.70,-0.66],	//右ひじ
+				[ 0.20, 0.00,-0.30],	//右手首
+			],
+		];
+		var org = 0;
+		var saguru = 0;	//ポケット(?)をさぐる
+		var base = 0;	//定位置
+		var douzo = 0;	//眼鏡をかける
+		var PHASE1 = 240;
+		var PHASE2 = 60+PHASE1;
+		var PHASE3 = 60+PHASE2;	//おわり
+		if(action_type == ACTION_MEGANE_ON) {
+			count2 = action_count;
+		}
+		else {
+			count2 = PHASE3-action_count;
+			if(count2 == PHASE1-60) {
+				action_count+=60;
+				count2 = PHASE3-action_count;
+			}
+		}
+		//ON
+		if(count2<60) {
+			saguru = count2/60;
+			org = 1-saguru;
+		}
+		else if(count2 < PHASE1-60) {
+			saguru = 1;
+			var g= Math.sin(count2/20*Math.PI/2);
+			mot_rot[0][3][X] += g * 0.15;	//ごそごそする
+			mot_rot[0][4][X] -= g * 0.2;	//ごそごそする
+			mot_rot[0][1][X] += g * 0.15;	//ごそごそする
+		}
+		else if(count2 < PHASE1) {
+			free_koyubi = 1;
+			saguru = (PHASE1-count2)/60;
+			base = 1-saguru;
+			hand_megane = 1;
+		}
+		//眼鏡どうぞ
+		else if(count2 < PHASE2) {
+			douzo = (count2-PHASE1)/(PHASE2-PHASE1);
+			base = 1-douzo;
+			hand_megane = 1;
+			megane_on = 0;
+		}
+		//終わる
+		else {
+			megane_on = 1;
+			douzo = (PHASE3 - count2)/(PHASE3-PHASE2);
+			org = 1-douzo;
+		}
+//		saguru = Math.sin(saguru*Math.PI/2);
+//		base = Math.sin(base*Math.PI/2);
+//		douzo = Math.sin(douzo*Math.PI/2);
+		hand_par[0] = hand_par[1] = (1-org)*0.4;
+		free_koyubi = (1-org)*0.6;
+		neck_r *= (org);
+		neck_up *= (org);
+		neck_up += saguru*0.4;
+		findBone(target,"上半身",0).rotation.x	+= saguru* 0.5 + base* 0.3;
+		findBone(target,"上半身",0).rotation.y	+= saguru*-0.5;
+		findBone(target,"上半身2",0).rotation.y	+= saguru*-0.3;
+		{	
+			var arm_p = [
+				arm_l1,arm_l2,arm_l3,
+				arm_r1,arm_r2,arm_r3,
+			];
+			for(i=0;i<6;i++) {
+				for(j=0;j<3;j++) {
+					arm_p[i][j] *= org;
+					var a=0;
+					var k;
+					for(k=0;k<3;k++) {	//pahse
+						a = mot_rot[k][i][j];
+						if(adj == i && adjp == k) {
+							if(j==X) a += adj_x*10;
+							if(j==Y) a += adj_y*10;
+							if(j==Z) a += adj_z*10;
+						}
+						if(k == 0) arm_p[i][j] += a * saguru;
+						if(k == 1) arm_p[i][j] += a * base;
+						if(k == 2) arm_p[i][j] += a * douzo;
+					}
+				}
+			}
+
+			if(action_count >= PHASE3) {
+				ActionEnd();
+			}
+		}
+		break;
 	}
 
 	//反映
@@ -2205,17 +2364,33 @@ function my_update() {
 	{
 		var list = [
 			//目の反射
-			{name:"左目2", mesh:eye_mesh[0], translate:[ 0.01+adj_x*0,-0.04, 0.01+adj_z*0], rotation:[ 0.06+adj_x, 0.38+adj_y*1, 0], scale:[1,0.8], order:-1},
-			{name:"右目2", mesh:eye_mesh[1], translate:[-0.01-adj_x*0,-0.04, 0.01+adj_z*0], rotation:[ 0.06+adj_x,-0.38-adj_y*1, 0], scale:[1,0.8], order:-1},
+			{name:"左目2", mesh:eye_mesh[0], translate:[ 0.01+adj_x*0,-0.04, 0.01+adj_z*0], rotation:[ 0.06+adj_x, 0.38+adj_y*0, 0], scale:[1,0.8], order:-1},
+			{name:"右目2", mesh:eye_mesh[1], translate:[-0.01-adj_x*0,-0.04, 0.01+adj_z*0], rotation:[ 0.06+adj_x,-0.38-adj_y*0, 0], scale:[1,0.8], order:-1},
 /*
 			{name:"左目2", mesh:eye_mesh[0], translate:[ 0.02,-0.02,0.05], rotation:[ 0.04, 0.4, 0], scale:[1,0.6], order:-1},
 			{name:"右目2", mesh:eye_mesh[1], translate:[-0.02,-0.02,0.05], rotation:[-0.04,-0.4, 0], scale:[1,0.6], order:-1},
 */
 			//桜髪飾り
 			{name:"頭", mesh:obj_mesh[OBJ_SAKURA], translate:[1.22+adj_x*0, 1.74+adj_y*0, 0.84+adj_z*0], rotation:[0.9+adj_x*0, 0.82+adj_y*0, -0.72+adj_z*0], scale:[1,1], order:0},
+			//眼鏡
+			{name:"頭", mesh:obj_mesh[OBJ_MEGANE], translate:[0+adj_x*0, 0.88+adj_y*0, 1.28+adj_z*0], rotation:[0.18+adj_x*0, 0.0+adj_y*0, -0.0+adj_z*0], scale:[0.94+adj_x*0,0.94+adj_y*0], order:0, skip:1},
+			//眼鏡（着用モーション）
+			{name:"左人指３", mesh:obj_mesh[OBJ_MEGANE], translate:[1.0+adj2_x*0, -0.2+adj2_y*0, 0.0+adj2_z*0], rotation:[-0.0+adj_x*0, 3.14+adj_y*0,0+adj_z*0], scale:[0.94+adj_x*0,0.94+adj_y*0], order:0, skip:0},
 			//腕時計（めり込む。却下）
 //			{name:"左手首", mesh:obj_mesh[OBJ_WATCH], translate:[adj_x*0,adj_y*0,adj_z*0], rotation:[adj_x,adj_y,adj_z], scale:0.025, order:0},
 		];
+		if(!megane_on && !hand_megane) {	//どこにも出さない
+			list[3].skip = 2;
+			list[4].skip = 1;
+		}
+		else if(hand_megane) {
+			list[3].skip = 1;	//手元にある
+			list[4].skip = 0;	//目元じゃない
+		}
+		else {
+			list[3].skip = 0;	//目元にある
+			list[4].skip = 1;	//手元じゃない
+		}
 		//きらきら目（補正）
 		if(eye_mesh[0].material.map == eye_texture[2]) {
 			for(i=0;i<2;i++) {
@@ -2243,6 +2418,13 @@ function my_update() {
 
 		var mat0,mat1,mat2,mat3,mat4,mat5,mat6;
 		for(i=0;i<list.length;i++) {
+			if(list[i].skip != 0) {
+				if(list[i].skip == 2) {
+					list[i].mesh.matrix = (new THREE.Matrix4()).makeScale(0,0,0);
+					list[i].mesh.matrixAutoUpdate = false;
+				}
+				continue;
+			}
 			var scy = 1;
 			switch(i) {
 			case 0:
@@ -2255,18 +2437,20 @@ function my_update() {
 				break;
 			}
 			var bone = findBone(chr_mesh,list[i].name);
-			if(i<2 && 0) {
-				mat0 = (new THREE.Matrix4()).copy(bone.parent.matrixWorld);	//親のマトリクス＋自身のtranslationで位置調整。回転が加わると向きがおかしなことになるため
-				mat0 = mat0.multiplyMatrices(mat0,(new THREE.Matrix4()).copyPosition(bone.matrix));
-			}
-			else {
+//				mat0 = (new THREE.Matrix4()).copy(bone.parent.matrixWorld);	//親のマトリクス＋自身のtranslationで位置調整。回転が加わると向きがおかしなことになるため
+//				mat0 = mat0.multiplyMatrices(mat0,(new THREE.Matrix4()).copyPosition(bone.matrix));
 				mat0 = (new THREE.Matrix4()).copy(bone.matrixWorld);
+			if((i== 4) && hand_megane != 0) {	//マトリクス回転なし指定
+				var now_pos = (new THREE.Vector3()).setFromMatrixPosition(bone.matrixWorld);
+				mat0 = (new THREE.Matrix4()).makeTranslation(now_pos.x, now_pos.y, now_pos.z);
 			}
+
 			mat0 = mat0.multiplyMatrices(mat0,(new THREE.Matrix4()).makeTranslation(list[i].translate[0],list[i].translate[1]+(1-scy)*-0.22,list[i].translate[2]));
 			mat0 = mat0.multiplyMatrices(mat0,(new THREE.Matrix4()).makeScale(list[i].scale[0], list[i].scale[1]*scy, list[i].scale[0]));
 			mat0 = mat0.multiplyMatrices(mat0,(new THREE.Matrix4()).makeRotationZ(list[i].rotation[2]));
 			mat0 = mat0.multiplyMatrices(mat0,(new THREE.Matrix4()).makeRotationY(list[i].rotation[1]));
 			mat0 = mat0.multiplyMatrices(mat0,(new THREE.Matrix4()).makeRotationX(list[i].rotation[0]));
+
 			//すべて適用
 			list[i].mesh.matrix = mat0;
 			list[i].mesh.matrixAutoUpdate = false;
