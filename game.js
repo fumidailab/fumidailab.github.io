@@ -2364,14 +2364,14 @@ function my_update() {
 	{
 		var list = [
 			//目の反射
-			{name:"左目2", mesh:eye_mesh[0], translate:[ 0.01+adj_x*0,-0.04, 0.01+adj_z*0], rotation:[ 0.06+adj_x, 0.38+adj_y*0, 0], scale:[1,0.8], order:-1},
-			{name:"右目2", mesh:eye_mesh[1], translate:[-0.01-adj_x*0,-0.04, 0.01+adj_z*0], rotation:[ 0.06+adj_x,-0.38-adj_y*0, 0], scale:[1,0.8], order:-1},
+			{name:"左目2", mesh:eye_mesh[0], translate:[ 0.01+adj_x*0,-0.04, 0.01+adj_z*0], rotation:[ 0.06+adj_x, 0.38+adj_y*0, 0], scale:[1,0.8], order:-1, skip:0},
+			{name:"右目2", mesh:eye_mesh[1], translate:[-0.01-adj_x*0,-0.04, 0.01+adj_z*0], rotation:[ 0.06+adj_x,-0.38-adj_y*0, 0], scale:[1,0.8], order:-1, skip:0},
 /*
 			{name:"左目2", mesh:eye_mesh[0], translate:[ 0.02,-0.02,0.05], rotation:[ 0.04, 0.4, 0], scale:[1,0.6], order:-1},
 			{name:"右目2", mesh:eye_mesh[1], translate:[-0.02,-0.02,0.05], rotation:[-0.04,-0.4, 0], scale:[1,0.6], order:-1},
 */
 			//桜髪飾り
-			{name:"頭", mesh:obj_mesh[OBJ_SAKURA], translate:[1.22+adj_x*0, 1.74+adj_y*0, 0.84+adj_z*0], rotation:[0.9+adj_x*0, 0.82+adj_y*0, -0.72+adj_z*0], scale:[1,1], order:0},
+			{name:"頭", mesh:obj_mesh[OBJ_SAKURA], translate:[1.22+adj_x*0, 1.74+adj_y*0, 0.84+adj_z*0], rotation:[0.9+adj_x*0, 0.82+adj_y*0, -0.72+adj_z*0], scale:[1,1], order:0, skip:0},
 			//眼鏡
 			{name:"頭", mesh:obj_mesh[OBJ_MEGANE], translate:[0+adj_x*0, 0.88+adj_y*0, 1.28+adj_z*0], rotation:[0.18+adj_x*0, 0.0+adj_y*0, -0.0+adj_z*0], scale:[0.94+adj_x*0,0.94+adj_y*0], order:0, skip:1},
 			//眼鏡（着用モーション）
