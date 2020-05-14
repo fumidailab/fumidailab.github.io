@@ -33,7 +33,7 @@ var chr_anim = new Array();
 var obj_mesh = new Array();
 var eye_mesh = new Array(2);
 var eye_mirror = new Array(2);
-var astro_mesh;
+var astro_world = new THREE.Object3D();;
 var helper,ikHelper;
 var effect;
 var chr_x = 0;
@@ -42,26 +42,45 @@ var chr_z = 0;
 var chr_default_x = 0;
 var chr_default_y = 0;
 var chr_default_z = 0;
-var key_a,key_s,key_d,key_w,key_q,key_e,key_shift,key_sp;
+var key_a,key_s,key_d,key_w,key_q,key_e,key_shift=false,key_sp;
 var old_q,old_a,old_w,old_s,old_e,old_d,old_sp;
 var count = 0;
 var initFlag = 0;
-var scene;
-var camera;
+var scene1;
+var scene2;
+var camera1;
+var camera2;
 var renderer;
 var clock = new THREE.Clock();;
 //var physicsHelper;
 //var chr_physics;
 var loader;
 var isVR=1;
-var user;
+var local_world1;
+var local_world2;
 var eye_texture;
 var loading_count = 0;
 
 
-var astro_layer = new Array(3*10);
+const ASTRO_KIND = 3;		//タイプ別
+const ASTRO_NUM = 5*5*5;	//銀河の数
+const ASTRO_SIZE = 10000;		//銀河のサイズ（直径）
+var astro_layer = new Array(ASTRO_KIND*ASTRO_NUM);
 var action_type=1;
 var action_count=0;
+
+var astro_move1 = new THREE.Vector3();	//移動元
+var astro_move2 = new THREE.Vector3();	//移動先
+var astro_move3 = new THREE.Vector3();	//移動先
+var astro_curve_pos;
+var astro_pos   = new THREE.Vector3(0,0,0);	//移動
+var astro_rot   = new THREE.Vector3(0,0,0);	//回転
+var astro_rot_vec = new THREE.Vector3(0,0,0);	//回転方向
+var astro_count = 0;				//移動カウンタ
+var astro_mode = 0;					//0:回転 1:移動
+var ufo_obj = new THREE.Object3D();
+var ufo_move1 = new THREE.Vector3(0,0,0);
+var ufo_move2 = new THREE.Vector3(0,0,0);
 
 const ACTION_DELAY = -500;	//次のアクションまでの待機時間
 const ACTION_YUBISASI	= action_type++;	//指さし
@@ -125,8 +144,6 @@ const FACE_CHEEK	= faceCount++;	//
 var camera_x = 0;
 var camera_y = 0;
 var camera_z = 0;
-var controller;//, controllerGrip, tempMatrix = new THREE.Matrix4();
-var INTERSECTED;
 var polyfill = new WebXRPolyfill();
 
 var near_mode = 0;
@@ -249,16 +266,25 @@ function init() {
 	
 	
 	// シーンを作成
-	scene = new THREE.Scene();
-	scene.background = new THREE.Color( 0x000010 );
+	scene1 = new THREE.Scene();	//座席scene
+//	scene1.background = new THREE.Color( 0x000010 );	//透明
+	scene2 = new THREE.Scene();	//天体scene
+	scene2.background = new THREE.Color( 0x000010 );
 
-	user = new THREE.Object3D();
-	scene.add( user );
+	local_world1 = new THREE.Object3D();	//座席ワールド
+	local_world2 = new THREE.Object3D();	//天体ワールド
 	// カメラを作成
-	camera = new THREE.PerspectiveCamera(	//(視野角, アスペクト比, near, far)
+	camera1 = new THREE.PerspectiveCamera(	//(視野角, アスペクト比, near, far)
 		((isVR != 0) ? 20 : 45),
 		window.innerWidth / window.innerHeight,
 		0.001,
+		1000
+	);
+	//天体移動用カメラ
+	camera2 = new THREE.PerspectiveCamera(	//(視野角, アスペクト比, near, far)
+		((isVR != 0) ? 20 : 45),
+		window.innerWidth / window.innerHeight,
+		0.001-0.0009,
 		100000
 	);
 
@@ -266,13 +292,20 @@ function init() {
 	camera_y = 28;	//chr_y
 	camera_z = -14;
 
-	user.position.set(camera_x, camera_y, camera_z);
 //	camera.layers.enable( 1 );
-	user.scale.set(20,20,20);	//カメラを大きくすることで視差が出る
-	user.up = new THREE.Vector3(0,1,0);
-
-	user.add(camera);
-	scene.add(user);
+	local_world1.scale.set(20,20,20);	//カメラを大きくすることで視差が出る
+	local_world2.scale.set(20,20,20);
+	local_world1.up = new THREE.Vector3(0,1,0);
+	local_world2.up = new THREE.Vector3(0,1,0);
+	local_world1.add(camera1);
+	local_world2.add(camera2);
+	scene1.add(local_world1);
+	scene2.add(local_world2);
+	scene2.add(astro_world);
+	
+	AstroMovePoint(false);
+	AstroMovePoint(true);
+	astro_pos = astro_move2.clone();
 
 	//キャラクターの初期位置
 	chr_x = chr_default_x = camera_x + 8;
@@ -281,91 +314,7 @@ function init() {
 
 	//test
 //	camera_x += -10;
-	// 箱を作成
-/*	var texture = new THREE.TextureLoader().load( 'test.png' );
 
-	const box_geo = new THREE.BoxGeometry(30, 30, 30);
-	var geometry = new THREE.PlaneBufferGeometry( 10000, 10000, 32 - 1, 32 - 1 );
-	geometry.rotateX( - Math.PI / 2 );
-
-	var vertices = geometry.attributes.position.array;
-
-	var i,j;
-	for(j=0;j<15000;j++) {
-		i = Math.floor(Math.random()*vertices.length/3)*3;
-
-		vertices[ i + 1 ] += 10;
-
-	}
-	geometry.computeFaceNormals();
-	geometry.computeVertexNormals();
-	const material = new THREE.MeshStandardMaterial({
-		map: texture
-	});
-	const box_material = new THREE.MeshStandardMaterial({
-		color: 0xa0a0a0
-	});
-	const mesh = new THREE.Mesh(geometry, material);
-	scene.add(mesh);
-
-//	const mesh2 = new THREE.Mesh(box_geo, box_material);
-//	scene.add(mesh2);
-*/
-	//天体
-	if(0){
-		var texture = new THREE.TextureLoader().load( '2981303_l.jpg' );
-		var geometry = new THREE.SphereGeometry( 120, 32, 32 );
-		var material = new THREE.MeshBasicMaterial( {
-			side: THREE.BackSide,
-			map: texture,
-			color: 0xffffff
-		} );
-		astro_mesh = new THREE.Mesh( geometry, material );
-		astro_mesh.scale.z = 0.9;
-		astro_mesh.rotation.x = Math.PI/2;
-		scene.add( astro_mesh );
-	}
-	//じゅうたん
-	if(0){
-		var i;
-		var texture = new THREE.TextureLoader().load( 'floor.png' );
-		texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-		texture.repeat.set( 10,10 );
-		var geometry = new THREE.CircleGeometry( 100, 30 );
-		var material = new THREE.MeshBasicMaterial( {
-			side: THREE.FrontSide,
-			map: texture,
-//			transparent : true,
-//			blending: THREE.AdditiveBlending,
-		} );
-/*		material.userData.outlineParameters = {	//effectのアウトラインを消す
-			thickness: 0,
-			color: [ 0, 0, 0 ],
-			alpha: 0,
-			visible: false,
-			keepAlive: true
-		};*/
-		var mesh = new THREE.Mesh( geometry, material );
-		mesh.rotation.set(Math.PI/-2,0,0);
-		scene.add( mesh );
-	}
-	//壁
-	if(0){
-		var i;
-		var texture = new THREE.TextureLoader().load( 'floor.png' );
-		texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-		texture.repeat.set( 10,3 );
-		var geometry = new THREE.CylinderGeometry( 100, 100, 10, 16,1, false );
-		var material = new THREE.MeshBasicMaterial( {
-			side: THREE.BackSide,
-			map: texture,
-			color: 0x808080
-		} );
-		var mesh = new THREE.Mesh( geometry, material );
-		mesh.position.set(0,20,0);
-		scene.add( mesh );
-	}
-	
 	//目の上にかけるレイヤー
 	if(1){
 		var i;
@@ -401,7 +350,7 @@ function init() {
 			else {
 				eye_mesh[i] = new THREE.Mesh( geometry, material );
 			}
-			scene.add( eye_mesh[i] );
+			scene1.add( eye_mesh[i] );
 		}
 		eye_texture = new Array(3);
 		eye_texture[0] = new THREE.TextureLoader().load( 'eye_star.jpg' );
@@ -421,65 +370,160 @@ function init() {
 	}
 	LoadingDisp();
 	var stars_tex = [
+//		new THREE.TextureLoader().load( 'star_nebula.png' ),
 		new THREE.TextureLoader().load( 'star_white4.png' ),
 		new THREE.TextureLoader().load( 'star_purple4.png' ),
 		new THREE.TextureLoader().load( 'star_red4.png' ),
 		new THREE.TextureLoader().load( 'star_green4.png' ),
+		new THREE.TextureLoader().load( 'star_blue4.png' ),
 	];
-	var i,j,k;
-	for(k=0;k<3;k++) {
-	for(j=0;j<10;j++) {
+	var i,j,k,n;
+	//星雲
+	//いくつかポイントをランダムに作成、参照しやすいようリスト化
+	var nebula = new Array(64);
+	var nebula_map = new Array(ASTRO_NUM);
+	for(j=0;j<ASTRO_NUM;j++) {
+		nebula_map[j] = new Array();
+	}
+	for(j=0;j<nebula.length;j++) {
+		var x,y,z;
+		x = ((Math.random()-0.5)*4) * ASTRO_SIZE;	//-2 -1 0 -1 2
+		y = ((Math.random()-0.5)*4) * ASTRO_SIZE;
+		z = ((Math.random()-0.5)*4) * ASTRO_SIZE;
+		nebula[j] = new THREE.Vector3(x,y,z);
+		x = (x+ASTRO_SIZE*2.5);
+		y = (y+ASTRO_SIZE*2.5);
+		z = (z+ASTRO_SIZE*2.5);
+		var ix,iy,iz;
+		for(ix=-1;ix<=1;ix++) {
+			for(iy=-1;iy<=1;iy++) {
+				for(iz=-1;iz<=1;iz++) {
+					if(Math.abs(ix)+Math.abs(iy)+Math.abs(ix) == 3) {
+//						continue;
+					}
+					var bx = Math.floor((x + ix*ASTRO_SIZE/2)/(ASTRO_SIZE*1));
+					var by = Math.floor((y + iy*ASTRO_SIZE/2)/(ASTRO_SIZE*1));
+					var bz = Math.floor((z + iz*ASTRO_SIZE/2)/(ASTRO_SIZE*1));
+					if(bx >= 0 && bx < 5
+					&& by >= 0 && by < 5
+					&& bz >= 0 && bz < 5) {
+						nebula_map[bx+by*5+bz*25].push(j);
+					}
+				}
+			}
+		}
+	}
+	for(j=0;j<ASTRO_NUM;j++) {
+		var x = Math.floor(j%5);
+		var y = Math.floor(j/5%5);
+		var z = Math.floor(j/25%5);
+		var r = x;
+		var g = y;
+		var b = z;
+//		document.getElementById("debugOut").innerHTML += "index="+j+"("+x+","+y+","+z+")<br>";
+		x = (x-2.5) * ASTRO_SIZE;
+		y = (y-2.5) * ASTRO_SIZE;
+		z = (z-2.5) * ASTRO_SIZE;
+		var nebula_rate = (Math.random());
+		for(k=0;k<ASTRO_KIND;k++) {
+			// 形状データを作成
+			const geometry = new THREE.Geometry();
+			// 配置する個数
+			const LENGTH = 2000 - k * 600;
+			for (i = 0; i < LENGTH; i++) {
+				var rx,ry,rz;
+				rx = x + Math.random() * ASTRO_SIZE;
+				ry = y + Math.random() * ASTRO_SIZE;
+				rz = z + Math.random() * ASTRO_SIZE;
+				//近くに星雲があるか
+				if(nebula_map[j].length > 0 && i < LENGTH*0.3) {
+					n = nebula_map[j][Math.floor(Math.random() * nebula_map[j].length)];
+					var nebula_z = nebula[n].z;
+					var nl = Math.random();
+					nl = Math.sin(nl * Math.PI/2) * 0.98;
+					rx = (1-nl) * rx + nl * nebula[n].x;
+					ry = (1-nl) * ry + nl * nebula[n].y;
+					rz = (1-nl) * rz + nl * nebula[n].z;
+				}
+				geometry.vertices.push(new THREE.Vector3(rx,ry,rz));
+			}
+			var color_tbl = [
+				0xffa000,
+				0x90f0ff,
+				0xffffff,
+
+				0x804000,
+				0x608080,
+				0x808080,
+			];
+			// マテリアルを作成
+			var material;
+			if(0) {
+				//new THREE.Color( 0x000010 )
+				var rgb = 0;
+				rgb |= (r*63)<<16;
+				rgb |= (g*63)<<8;
+				rgb |= (b*63)<<0;
+				material = new THREE.PointsMaterial({
+					// 一つ一つのサイズ
+					size: 1,
+					// 色
+					color: rgb,
+				});
+			}
+			else if(1 ||Math.random() < 0.95) {
+				var idx = Math.floor(Math.random()*stars_tex.length);
+				if(k == 0)
+					idx = 0;
+				var size = (Math.random() < 0.5) ? 0.2*4 : 0.05*4;
+				material = new THREE.PointsMaterial({
+					// 一つ一つのサイズ
+					size: size,
+					// 色
+					color: 0xffffff,
+					map: stars_tex[idx],
+					blending: THREE.AdditiveBlending,
+					transparent: true,
+					opacity: 0.7
+				});
+			}
+			else {
+				material = new THREE.PointsMaterial({
+					// 一つ一つのサイズ
+					size: (Math.random() < 0.5) ? 0.5 : 0.02,
+					// 色
+					color: color_tbl[Math.floor(Math.random()*color_tbl.length)],
+				});
+			}
+
+			astro_layer[j*ASTRO_NUM+k] = new THREE.Points(geometry, material);
+			astro_world.add(astro_layer[j*ASTRO_NUM+k]);
+		}
+	}
+	//UFO
+	{
+		var ufo_tex = new THREE.TextureLoader().load( 'ufo.png' );
 		// 形状データを作成
 		const geometry = new THREE.Geometry();
-		// 配置する個数
-		var LENGTH = 100+k*800;
-		if(j == 9) LENGTH = 5000+k*40000;
-		for (i = 0; i < LENGTH; i++) {
-			var rx,ry,l;
-			rx = Math.random() * Math.PI * 2;
-			ry = Math.random() * Math.PI * 2;
-			if(j==9 && ry > Math.PI*0.95) ry *= -1;
-			l  = 200 + Math.random() * 300 + j * 450;
-			geometry.vertices.push(new THREE.Vector3(
-				Math.sin(rx) * l,
-				Math.sin(ry) * l,
-				Math.cos(ry) * Math.cos(rx) * l
-			));
+		for(i=0;i<1;i++) {
+			var x,y,z;
+			x = (Math.random()-0.5) * ASTRO_SIZE*7*1;
+			y = (Math.random()-0.5) * ASTRO_SIZE*7*1;
+			z = (Math.random()-0.5) * ASTRO_SIZE*7*1;
+			geometry.vertices.push(new THREE.Vector3(x,y,z));
 		}
-		var color = [
-			0xffa000,
-			0x90f0ff,
-			0xffffff,
-
-			0x804000,
-			0x608080,
-			0x808080,
-		];
 		// マテリアルを作成
 		var material;
-		if(j <= 5) {
-			material = new THREE.PointsMaterial({
-				// 一つ一つのサイズ
-				size: (j < 2) ? 0.2 : 0.05,
-				// 色
-				color: 0xffffff,
-				map: stars_tex[Math.floor(Math.random()*4)],
-				blending: THREE.AdditiveBlending,
-				transparent: true
-			});
-		}
-		else {
-			material = new THREE.PointsMaterial({
-				// 一つ一つのサイズ
-				size: (j>=8) ? 0.5 : 0.02,
-				// 色
-				color: (j==9) ? color[k+3] : color[k],
-			});
-		}
-
-		astro_layer[k*10+j] = new THREE.Points(geometry, material);
-		scene.add(astro_layer[k*10+j]);
-	}
+		material = new THREE.PointsMaterial({
+			// 一つ一つのサイズ
+			size: 15,
+			// 色
+			color: 0xffffff,
+			map: ufo_tex,
+			transparent: true,
+		});
+		ufo_obj.add(new THREE.Points(geometry, material));
+		astro_world.add(ufo_obj);
 	}
 	LoadingDisp();
 	
@@ -490,14 +534,14 @@ function init() {
 	);
 	directionalLight.position.set(0, 35, -25);
 	// シーンに追加
-//	scene.add(directionalLight);
+//	scene1.add(directionalLight);
 
 	//アンビエントの強度を上げてポイントライトの強度を下げると影が薄くなる
 	const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.5);
-	scene.add(ambientLight);	
+	scene1.add(ambientLight);	
 
 	pointLight = new THREE.PointLight(0xFFFFFF, 0.15, 200, 1.2);	//(色, 光の強さ, 距離, 光の減衰率)
-	scene.add(pointLight);
+	scene1.add(pointLight);
 
 	if(1){
 		var light = pointLight;
@@ -514,31 +558,13 @@ function init() {
 //		light.shadow.bias = 0.0;
 		//Create a helper for the shadow camera (optional)
 		//shadowCameraHelper = new THREE.CameraHelper( light.shadow.camera );
-		//scene.add( shadowCameraHelper );
+		//scene1.add( shadowCameraHelper );
 
 //		lightHelper = new THREE.DirectionalLightHelper( light );
 		//lightHelper = new THREE.PointLightHelper( light );
-		//scene.add( lightHelper );
+		//scene1.add( lightHelper );
 	}
 
-	//var world = new CANNON.World(); // world が物理世界になる
-	//world.gravity.set(0, 0, -9.82); // m/s² // x y z それぞれにかかる力（重力）を設定
-	
-	if(0){
-		var geometry = new THREE.BoxBufferGeometry( 0.15, 0.15, 0.15 );
-
-		for ( var i = 0; i < 100; i ++ ) {
-
-			var object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } ) );
-
-			object.position.x = Math.random() * 60 - 30;
-			object.position.y = Math.random() * 30;
-			object.position.z = Math.random() * 60 - 30;
-			object.scale.set(20,20,20);
-
-			scene.add(object);
-		}
-	}
 
 	load_flag = 0;
 	effect = new OutlineEffect( renderer );
@@ -548,42 +574,14 @@ function init() {
 	helper = new MMDAnimationHelper( {
 		afterglow: 2.0
 	} );
-	//helper.sharedPhysics = true;
 
 	loader = new MMDLoader();
 
-//		loader.loadWithAnimation( modelFile, vmdFiles, function ( mmd ) {
 	loader.load( modelFile, /*vmdFiles,*/ function ( mmd ) {
 
-		chr_mesh = mmd;//.mesh;			//SkinnedMesh
-//			chr_mesh.scale.set(10,10,10);
-		scene.add( chr_mesh );
+		chr_mesh = mmd;;			//SkinnedMesh
+		scene1.add( chr_mesh );
 
-		/*helper.add(chr_mesh, {
-			animation: mmd.animation,
-			physics: true
-		});
-		/*helper.add( chr_mesh, {
-			animation: mmd.animation,
-			physics: true
-		} );
-		physicsHelper = helper.objects.get( chr_mesh ).physics.createHelper();
-		chr_physics = helper.objects.get( chr_mesh ).physics;
-		physicsHelper.visible = false;
-		scene.add( physicsHelper );*/
-
-		/*ikHelper = helper.objects.get( mmd ).ikSolver.createHelper();
-		ikHelper.visible = false;
-		scene.add( ikHelper );*/
-
-		//helper.enable( 'animation', true );
-
-		/*var radius = 1; // m
-		var sphereBody = new CANNON.Body({
-		mass: 5, // kg // massは重さ。
-		position: new CANNON.Vec3(0, 0, 10), // m
-		shape: new CANNON.Sphere(radius)  // shapeはthree.jsのものと同じ
-		});*/
 		load_flag |= 1;
 
 	}, null, null );
@@ -657,6 +655,29 @@ function LoadingDisp() {
 	loading_count++;
 }
 	
+function AstroMovePoint(curve) {
+	astro_move1 = astro_move2.clone();
+	astro_move2 = astro_move3.clone();
+	astro_move3.set(
+		Math.random()*ASTRO_SIZE*4-ASTRO_SIZE*2,
+		Math.random()*ASTRO_SIZE*4-ASTRO_SIZE*2,
+		Math.random()*ASTRO_SIZE*4-ASTRO_SIZE*2);
+	
+	if(curve) {
+	astro_curve_pos = new THREE.QuadraticBezierCurve3(
+		astro_move1,
+		astro_move2,
+		astro_move3).getPoints(100);
+	}
+	
+	astro_count = 0;
+	astro_mode = 1;
+}
+function AstroRotate() {
+	astro_mode = 0;
+	astro_count = 0;
+//	astro_rot.set(0,0,0);
+}
 var adj_x=0;
 var adj_y=0;
 var adj_z=0;
@@ -666,27 +687,7 @@ var adj2_z=0;
 var tickCount = 0;
 
 function my_update() {
-	if(!isVR) 
-	{
-//		requestAnimationFrame(my_update);
-	}
-	
 
-	/*if(load_flag == (1|4)) {
-		if(chr_anim.length >= vmdFiles.length) {
-			load_flag |= 2;
-		}
-		else if(animIndex == chr_anim.length && loader) {
-			loader.loadAnimation( [vmdFiles[animIndex]], chr_mesh, function ( vmd ) {
-
-				chr_anim.push(vmd);
-				//document.getElementById("debugOut").innerHTML += "animIndex="+chr_anim.length;
-				
-			}, null, null );
-			animIndex++;
-		}
-		return;
-	}*/
 	load_flag |= 2;
 	if(load_flag == (1|2)) {
 		if(obj_mesh.length >= objFiles.length) {
@@ -696,7 +697,7 @@ function my_update() {
 			loader.load( objFiles[objIndex], function ( mmd ) {
 
 				obj_mesh.push(mmd);
-				scene.add( mmd );
+				scene1.add( mmd );
 
 				helper.add( mmd, {
 					physics: false
@@ -722,20 +723,8 @@ function my_update() {
 //			ik: true,
 			physics: false
 		});
-//		var ph = helper.objects.get( chr_mesh ).physics.createHelper();
-//		helper.objects.get( chr_mesh ).physics.setGravity(0.98);
-//		ph.visible = false;
-//		scene.add( ph );
 
-		/*ikHelper = helper.objects.get( chr_mesh ).ikSolver.createHelper();
-		ikHelper.visible = false;
-		scene.add( ikHelper );*/
-
-//		document.getElementById("debugOut").innerHTML = "停止<br>";
 //		selectAnimation(chr_mesh, 0, true);
-		
-//		helper.update(200);
-//		helper.objects.get( chr_mesh ).physics.warmup(45);
 //		stopAnimation(chr_mesh);
 
 		//ソファの複製
@@ -769,7 +758,7 @@ function my_update() {
 //				sofa_clone.scale.x = 2.6;
 //				sofa_clone.castShadow = true;
 //				sofa_clone.receiveShadow = true;
-				scene.add(sofa_clone);
+				scene1.add(sofa_clone);
 			}
 			//座席段差
 			var yuka_mesh = new THREE.Mesh(yuka_geometry, yuka_material);
@@ -778,7 +767,7 @@ function my_update() {
 			if(y == -1){	//自分のいる段だけ有効
 				yuka_mesh.receiveShadow = true;
 			}
-			scene.add(yuka_mesh);
+			scene1.add(yuka_mesh);
 		}
 		obj_mesh[OBJ_WALL].scale.set(2.9, 1.8, 2.9);
 		obj_mesh[OBJ_WALL].rotation.y = Math.PI;
@@ -2303,40 +2292,114 @@ function my_update() {
 		camera_y + Math.sin(cam_rot_y) * -100,
 		camera_z + Math.cos(cam_rot_x) * Math.cos(cam_rot_y) * 100
 	);
-	user.position.set(camera_x, camera_y, camera_z);
-	user.lookAt(cam_at);
+	local_world1.position.set(camera_x, camera_y, camera_z);
+	local_world1.lookAt(cam_at);
+	local_world2.position.set(camera_x, camera_y, camera_z);
+	local_world2.lookAt(cam_at);
 
-	
-	//天体
-	if(astro_mesh) {
-		astro_mesh.rotation.z = count/600.0;
+	var spd = 0.99;
+	var rot_spd = 0;
+	if(astro_mode == 0) {
+
+		if(astro_count < 1200) {
+			astro_count++;
+		}
+		else {
+			AstroMovePoint(false);
+			AstroMovePoint(true);
+		}
+//		document.getElementById("MessageOut").innerHTML = "count="+astro_count+" n="+n1+"<br>";
+		
+		rot_spd = 1;
 	}
-	if(astro_layer) {
-		var k;
-		for(k=0;k<3;k++) {
-			for(i=0;i<10;i++) {
-				var speed = count / (1000+i*50);
-				astro_layer[k*10+i].rotation.y = speed;
-	//			astro_layer[k*10+i].rotation.x = Math.sin(count/4000+i/1000) * Math.PI;
-	//			astro_layer[k*10+i].rotation.z = Math.cos(count/4000+i/1000) * Math.PI;
-			}
+	else {
+		const LENGTH = 900;
+		var idx = astro_count / (LENGTH*1.0);
+		idx = (Math.cos((idx+1.0) * Math.PI) + 1.0)/2;
+		idx = (Math.cos((idx+1.0) * Math.PI) + 1.0)/2;
+		idx *= astro_curve_pos.length-1;
+		var n1 = Math.floor(idx);
+		var n2 = (idx < astro_curve_pos.length-1) ? (n1+1) : (astro_curve_pos.length-1);
+		var n3 = (idx - n1);
+		if(n3 < 0) n3 = 0;
+		if(n3 > 1) n3 = 1;
+//		document.getElementById("MessageOut").innerHTML = "count="+astro_count+" n="+idx+"<br>";
+		astro_pos.x = astro_curve_pos[n1].x * (1-n3) + astro_curve_pos[n2].x * (n3);
+		astro_pos.y = astro_curve_pos[n1].y * (1-n3) + astro_curve_pos[n2].y * (n3);
+		astro_pos.z = astro_curve_pos[n1].z * (1-n3) + astro_curve_pos[n2].z * (n3);
+
+
+//		document.getElementById("MessageOut").innerHTML = "count="+astro_count+" n="+n+"<br>";
+//		document.getElementById("MessageOut").innerHTML += "len="+astro_len+"<br>";
+//		document.getElementById("MessageOut").innerHTML = "("+astro_pos.x+","+astro_pos.y+","+astro_pos.z+")<br>";
+		if(astro_count < 150) {
+			rot_spd = (150 - astro_count)/150;
+		}
+		else if(astro_count == LENGTH/2) {
+			astro_rot_vec = new THREE.Vector3(
+				Math.random()-0.5,
+				Math.random()-0.5,
+				Math.random()-0.5);
+			astro_rot_vec.normalize();
+		}
+		else if(astro_count >= LENGTH-150) {
+			rot_spd = (astro_count - (LENGTH-150))/150;
+		}
+		
+		astro_count++;
+		if(astro_count >= LENGTH) {
+//			AstroMovePoint(false);
+//			AstroMovePoint(true);
+			AstroRotate();
 		}
 	}
-	var astr_x = astro_layer[0].rotation.x / (Math.PI) * 1.3;
-	var astr_y = astro_layer[0].rotation.y / (Math.PI) * 1.3;
-	pointLight.position.set(
-		chr_x+Math.sin(astro_layer[0].rotation.y*1)*20,
-		chr_y+60,
-		chr_z+Math.cos(astro_layer[0].rotation.y*1)*20);
-//	directionalLight.position.set(chr_x+Math.sin(astro_layer[0].rotation.y*10)*200, chr_y+180, chr_z+Math.cos(astro_layer[0].rotation.y*10)*200);
-		
+	astro_rot.x += astro_rot_vec.x * rot_spd * 0.003;
+	astro_rot.y += astro_rot_vec.y * rot_spd * 0.003;
+	astro_rot.z += astro_rot_vec.z * rot_spd * 0.003;
+	//@カメラは動かさない、astro_worldのマトリクス移動回転でなんとかする
+	astro_world.matrix.identity();
+	astro_world.matrix.multiplyMatrices(astro_world.matrix,(new THREE.Matrix4()).makeRotationZ(astro_rot.z));
+	astro_world.matrix.multiplyMatrices(astro_world.matrix,(new THREE.Matrix4()).makeRotationY(astro_rot.y));
+	astro_world.matrix.multiplyMatrices(astro_world.matrix,(new THREE.Matrix4()).makeRotationX(astro_rot.x));
+	astro_world.matrix.multiplyMatrices(astro_world.matrix,(new THREE.Matrix4()).makeTranslation(astro_pos.x, astro_pos.y, astro_pos.z));
+	astro_world.matrixAutoUpdate = false;
 
-	/*if(near_mode == 0)*/ {
-		while(astr_x > 1.0) astr_x -= 1.0;
-		while(astr_y > 1.0) astr_y -= 1.0;
-		//目の中を星が流れる
-		//Reflectorを使わない方法
-		eye_texture[0].offset.set( 1.0 - astr_y, 1.0 - astr_x );
+	if(count % 90 == 0) {
+		ufo_move1 = ufo_move2.clone();
+		ufo_move2.set((Math.random()-0.5)*ASTRO_SIZE*5,(Math.random()-0.5)*ASTRO_SIZE*5,(Math.random()-0.5)*ASTRO_SIZE*5);
+	}
+//	ufo_obj.matrix.makeRotationY(count/180)
+	{
+		var n = count%90/90;
+		ufo_obj.matrix.makeTranslation(
+			ufo_move1.x * (1-n) + ufo_move2.x * (n),
+			ufo_move1.y * (1-n) + ufo_move2.y * (n),
+			ufo_move1.z * (1-n) + ufo_move2.z * (n)
+		);
+		ufo_obj.matrixAutoUpdate = false;
+	}
+
+	
+	pointLight.position.set(
+		chr_x/*+Math.sin(0)*20*/,
+		chr_y+60,
+		chr_z-10/*+Math.cos(0)*20*/);
+//	directionalLight.position.set(chr_x+Math.sin(astro_layer[0].rotation.y*10)*200, chr_y+180, chr_z+Math.cos(astro_layer[0].rotation.y*10)*200);
+
+	//目の中を星が流れる
+	//Reflectorを使わない方法
+	if(eye_mesh[0].material.map == eye_texture[0]){
+		var astr_eye = new THREE.Vector3(
+			astro_pos.x / 6000 + astro_rot.x,
+			astro_pos.y / 6000 + astro_rot.y,
+			astro_pos.z / 6000 + astro_rot.z,
+		);
+//		while(astr_eye.x > 1.0) astr_eye.x -= 1.0;
+//		while(astr_eye.y > 1.0) astr_eye.y -= 1.0;
+		eye_texture[0].offset.set( 1.0 - astr_eye.y, 1.0 - astr_eye.x );
+	}
+	//目をキラキラさせる
+	if(eye_mesh[0].material.map == eye_texture[2]){
 		var c = Math.floor(count/10);
 		eye_texture[2].offset.set( c%2/2, Math.floor(c/2)/2 );
 	}
@@ -2481,9 +2544,9 @@ function my_update() {
 //	obj_mesh[OBJ_SOFA+1].rotation.y=count/60;
 	}	//update loop
 	// レンダリング
-	//renderer.render(scene, camera);
+	//renderer.render(scene1, camera1);
 	if(!isVR) {
-		effect.render(scene, camera);
+		//effect.render(scene2, camera1);
 	}
 	else {
 		//window.requestAnimationFrame(render);
@@ -2491,18 +2554,22 @@ function my_update() {
 }
 
 function render() {
-	/*if(isVR)*/ {
+	if(effect) {
 		my_update();
-//		renderer.render(scene, camera);
 		if(lightHelper) lightHelper.update();
 		if(shadowCameraHelper) shadowCameraHelper.update();
-		effect.render( scene, camera );
+
+		effect.render( scene2, camera2 );	//天体描いてから
+		renderer.clearDepth();				//デプスクリアして
+		effect.render( scene1, camera1 );	//座席描く。座席内に星が入り込まないように苦肉の策
 	}
 }
 function onWindowResize() {
 
-	camera.aspect = window.innerWidth / window.innerHeight;
-	camera.updateProjectionMatrix();
+	camera1.aspect =
+	camera2.aspect = window.innerWidth / window.innerHeight;
+	camera1.updateProjectionMatrix();
+	camera2.updateProjectionMatrix();
 
 	renderer.setSize( window.innerWidth, window.innerHeight );
 
@@ -2534,7 +2601,7 @@ function selectAnimation(mesh, index, loop)
 		if(physicsHelper == null) {
 		physicsHelper = helper.objects.get( mesh ).physics.createHelper();
 		physicsHelper.visible = false;
-		scene.add( physicsHelper );
+		scene1.add( physicsHelper );
 		}
 
 //		mesh.updateMatrixWorld( true );
@@ -2603,7 +2670,7 @@ function stopAnimation(mesh)
 //		physicsHelper = chr_physics.createHelper();
 //	}
 	if(physicsHelper != null) {
-		//scene.add( physicsHelper );
+		//scene1.add( physicsHelper );
 	}
 //	var clip = chr_anim[index];
 //	helper.remove(mesh);

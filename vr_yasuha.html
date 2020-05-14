@@ -12,15 +12,15 @@
 </head>
 <script src="https://threejs.org/examples/js/libs/ammo.js"></script>
 <!--script src="./cannon/cannon.js"></script-->
-<script src="https://threejs.org/build/three.js"></script>
+<script src="https://threejs.org/build/three.min.js"></script>
 <!--script src="./three.js-master/examples/js/vr/HelioWebXRPolyfill.js"></script-->
 <script src='https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.js'></script>
 <script>
 function loadScript() {
 	var script = document.createElement("script");
 	script.type = "module";
-	script.src = "game.js?"+(new Date).getTime();
-//	script.src = "game.js";
+//	script.src = "game.js?"+(new Date).getTime();
+	script.src = "game.js";
 	document.body.appendChild(script);
 }
 </script>
