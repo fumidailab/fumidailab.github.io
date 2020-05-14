@@ -278,7 +278,7 @@ function init() {
 		((isVR != 0) ? 20 : 45),
 		window.innerWidth / window.innerHeight,
 		0.001,
-		1000
+		100000
 	);
 	//天体移動用カメラ
 	camera2 = new THREE.PerspectiveCamera(	//(視野角, アスペクト比, near, far)
