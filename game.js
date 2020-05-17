@@ -49,15 +49,14 @@ var initFlag = 0;
 var scene1;
 var scene2;
 var camera1;
-var camera2;
 var renderer;
 var clock = new THREE.Clock();;
 //var physicsHelper;
 //var chr_physics;
 var loader;
 var isVR=1;
-var local_world1;
-var local_world2;
+var world_view1;
+var world_view2;
 var eye_texture;
 var loading_count = 0;
 
@@ -226,7 +225,17 @@ const OBJ_MEGANE = objNum++;			//めがね
 
 }
 
-
+function setCameraMatrix(matrix, eye, target, add_rot, scale) {
+	var mat0;
+	mat0 = (new THREE.Matrix4()).makeTranslation(eye.x, eye.y, eye.z);
+	mat0.multiplyMatrices(mat0,(new THREE.Matrix4()).makeRotationZ(add_rot.z));
+	mat0.multiplyMatrices(mat0,(new THREE.Matrix4()).makeRotationY(add_rot.y));
+	mat0.multiplyMatrices(mat0,(new THREE.Matrix4()).makeRotationX(add_rot.x));
+	mat0.multiplyMatrices(mat0,(new THREE.Matrix4()).lookAt(eye, target, new THREE.Vector3(0,1,0)));
+	mat0.multiplyMatrices(mat0,(new THREE.Matrix4()).makeScale(scale,scale,scale));
+	matrix.matrix = (new THREE.Matrix4()).getInverse(mat0);
+	matrix.matrixAutoUpdate = false;
+}
 
 
 function init() {
@@ -271,37 +280,28 @@ function init() {
 	scene2 = new THREE.Scene();	//天体scene
 	scene2.background = new THREE.Color( 0x000010 );
 
-	local_world1 = new THREE.Object3D();	//座席ワールド
-	local_world2 = new THREE.Object3D();	//天体ワールド
+	world_view1 = new THREE.Object3D();	//座席ワールド
+	world_view2 = new THREE.Object3D();	//天体ワールド
 	// カメラを作成
 	camera1 = new THREE.PerspectiveCamera(	//(視野角, アスペクト比, near, far)
 		((isVR != 0) ? 20 : 45),
 		window.innerWidth / window.innerHeight,
-		0.001,
-		100000
+		0.1,
+		50000
 	);
-	//天体移動用カメラ
-	camera2 = new THREE.PerspectiveCamera(	//(視野角, アスペクト比, near, far)
-		((isVR != 0) ? 20 : 45),
-		window.innerWidth / window.innerHeight,
-		0.001-0.0009,
-		100000
-	);
+	camera1.position.set(0,0,0);
+	camera1.lookAt(new THREE.Vector3(0,0,-20));
 
 	camera_x = -4;
 	camera_y = 28;	//chr_y
 	camera_z = -14;
 
 //	camera.layers.enable( 1 );
-	local_world1.scale.set(20,20,20);	//カメラを大きくすることで視差が出る
-	local_world2.scale.set(20,20,20);
-	local_world1.up = new THREE.Vector3(0,1,0);
-	local_world2.up = new THREE.Vector3(0,1,0);
-	local_world1.add(camera1);
-	local_world2.add(camera2);
-	scene1.add(local_world1);
-	scene2.add(local_world2);
-	scene2.add(astro_world);
+//	world_view1.scale.set(20,20,20);	//カメラを大きくすることで視差が出る
+//	world_view2.scale.set(20,20,20);
+	scene1.add(world_view1);
+	scene2.add(world_view2);
+	world_view2.add(astro_world);
 	
 	AstroMovePoint(false);
 	AstroMovePoint(true);
@@ -350,7 +350,7 @@ function init() {
 			else {
 				eye_mesh[i] = new THREE.Mesh( geometry, material );
 			}
-			scene1.add( eye_mesh[i] );
+			world_view1.add( eye_mesh[i] );
 		}
 		eye_texture = new Array(3);
 		eye_texture[0] = new THREE.TextureLoader().load( 'eye_star.jpg' );
@@ -534,14 +534,14 @@ function init() {
 	);
 	directionalLight.position.set(0, 35, -25);
 	// シーンに追加
-//	scene1.add(directionalLight);
+//	world_view1.add(directionalLight);
 
 	//アンビエントの強度を上げてポイントライトの強度を下げると影が薄くなる
 	const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.5);
-	scene1.add(ambientLight);	
+	world_view1.add(ambientLight);	
 
 	pointLight = new THREE.PointLight(0xFFFFFF, 0.15, 200, 1.2);	//(色, 光の強さ, 距離, 光の減衰率)
-	scene1.add(pointLight);
+	world_view1.add(pointLight);
 
 	if(1){
 		var light = pointLight;
@@ -558,11 +558,11 @@ function init() {
 //		light.shadow.bias = 0.0;
 		//Create a helper for the shadow camera (optional)
 		//shadowCameraHelper = new THREE.CameraHelper( light.shadow.camera );
-		//scene1.add( shadowCameraHelper );
+		//world_view1.add( shadowCameraHelper );
 
 //		lightHelper = new THREE.DirectionalLightHelper( light );
 		//lightHelper = new THREE.PointLightHelper( light );
-		//scene1.add( lightHelper );
+		//world_view1.add( lightHelper );
 	}
 
 
@@ -580,7 +580,7 @@ function init() {
 	loader.load( modelFile, /*vmdFiles,*/ function ( mmd ) {
 
 		chr_mesh = mmd;;			//SkinnedMesh
-		scene1.add( chr_mesh );
+		world_view1.add( chr_mesh );
 
 		load_flag |= 1;
 
@@ -697,7 +697,7 @@ function my_update() {
 			loader.load( objFiles[objIndex], function ( mmd ) {
 
 				obj_mesh.push(mmd);
-				scene1.add( mmd );
+				world_view1.add( mmd );
 
 				helper.add( mmd, {
 					physics: false
@@ -758,7 +758,7 @@ function my_update() {
 //				sofa_clone.scale.x = 2.6;
 //				sofa_clone.castShadow = true;
 //				sofa_clone.receiveShadow = true;
-				scene1.add(sofa_clone);
+				world_view1.add(sofa_clone);
 			}
 			//座席段差
 			var yuka_mesh = new THREE.Mesh(yuka_geometry, yuka_material);
@@ -767,7 +767,7 @@ function my_update() {
 			if(y == -1){	//自分のいる段だけ有効
 				yuka_mesh.receiveShadow = true;
 			}
-			scene1.add(yuka_mesh);
+			world_view1.add(yuka_mesh);
 		}
 		obj_mesh[OBJ_WALL].scale.set(2.9, 1.8, 2.9);
 		obj_mesh[OBJ_WALL].rotation.y = Math.PI;
@@ -804,6 +804,11 @@ function my_update() {
 		}
 	count++;
 	tickCount -= 1.0/60.0;
+
+	world_view1.matrixWorld = new THREE.Matrix4();
+	world_view1.matrixAutoUpdate = true;
+//	world_view2.matrixWorld = new THREE.Matrix4();
+//	world_view2.matrixAutoUpdate = true;
 	if(helper) {
 		helper.update( 0.0166 );
 	}
@@ -2287,15 +2292,14 @@ function my_update() {
 		ms_last_x = ms_cur_x;
 		ms_last_y = ms_cur_y;
 	}
-	var cam_at = new THREE.Vector3(
-		camera_x + Math.sin(cam_rot_x) * Math.cos(cam_rot_y) * 100,
-		camera_y + Math.sin(cam_rot_y) * -100,
-		camera_z + Math.cos(cam_rot_x) * Math.cos(cam_rot_y) * 100
-	);
-	local_world1.position.set(camera_x, camera_y, camera_z);
-	local_world1.lookAt(cam_at);
-	local_world2.position.set(camera_x, camera_y, camera_z);
-	local_world2.lookAt(cam_at);
+	setCameraMatrix(
+		world_view1,
+		new THREE.Vector3(camera_x, camera_y, camera_z),
+		new THREE.Vector3(camera_x, camera_y, camera_z-100),
+		new THREE.Vector3(cam_rot_y,cam_rot_x,cam_rot_z),
+		20);
+	world_view2.matrix = world_view1.matrix.clone();
+	world_view2.matrixAutoUpdate = false;
 
 	var spd = 0.99;
 	var rot_spd = 0;
@@ -2559,17 +2563,15 @@ function render() {
 		if(lightHelper) lightHelper.update();
 		if(shadowCameraHelper) shadowCameraHelper.update();
 
-		effect.render( scene2, camera2 );	//天体描いてから
+		effect.render( scene2, camera1 );	//天体描いてから
 		renderer.clearDepth();				//デプスクリアして
 		effect.render( scene1, camera1 );	//座席描く。座席内に星が入り込まないように苦肉の策
 	}
 }
 function onWindowResize() {
 
-	camera1.aspect =
-	camera2.aspect = window.innerWidth / window.innerHeight;
+	camera1.aspect =window.innerWidth / window.innerHeight;
 	camera1.updateProjectionMatrix();
-	camera2.updateProjectionMatrix();
 
 	renderer.setSize( window.innerWidth, window.innerHeight );
 
