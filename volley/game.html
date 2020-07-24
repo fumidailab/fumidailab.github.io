@@ -1,0 +1,98 @@
+<html>
+<title>Man to Spike! 未央とビーチバレー</title>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<!--link type="text/css" rel="stylesheet" href="main.css"-->
+<link type="text/css" rel="stylesheet" href="style.css">
+
+<style>body{background:white;margin:0;padding:0;}</style>
+</head>
+<!--script src="../three.js-master/examples/js/libs/ammo.js"></script-->
+<script src="../three.js-master/examples/js/libs/cannon.js"></script>
+
+<script src="../three.js-master/build/three.js"></script>
+<!--script src="https://threejs.org/examples/js/libs/ammo.js"></script-->
+<!--script src="https://threejs.org/examples/js/libs/cannon.js"></script-->
+<!--script src="https://threejs.org/build/three.js"></script-->
+<!--script src="./three.js-master/examples/js/vr/HelioWebXRPolyfill.js"></script-->
+<!--script src='https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.js'></script-->
+<script>
+function loadScript() {
+	var script = document.createElement("script");
+	script.type = "module";
+	script.src = "game2.js";
+	document.body.appendChild(script);
+}
+</script>
+
+<body onLoad="loadScript()">
+<div id="overlay">
+	<div id="ui">
+		<button id="Pause"></button>
+		<button id="Move"></button>
+		<button id="Camera"></button>
+		<button id="Sound"></button>
+		<button id="FullScreen" style="display:none">&#x26F6;</button>
+		<button id="Option">&#x2699;</button>
+		<div id="ui_caption" style="font-size:x-small"><br></div>
+	</div>
+	<button id="select1" style="display:none;top:35%">はい</button>
+	<button id="select2" style="display:none;top:45%">いいえ</button>
+	<div id="window" style="display:none">
+		<div id="message"></div>
+		<table id="option" style="display:none" border=0 cellspacing=10>
+			<tr>
+				<td>オプション</td>
+				<td align="right">
+					<button id="ok">ＯＫ</button>
+					<button id="cancel">キャンセル</button>
+				</td>
+			</tr>
+			<tr>
+				<td id="group">
+					難易度<br>
+					<label><input name="game_level" type="radio" value="0">EASY</label><br>
+					<label><input name="game_level" type="radio" value="1">NORMAL</label><br>
+					<label><input name="game_level" type="radio" value="2">HARD</label><br>
+				</td>
+				<td>
+				</td>
+			</tr>
+			<tr>
+				<td id="group">
+					カメラ<br>
+					<label><input name="camera" type="radio" value="0">ニュートラル</label><br>
+					<label><input name="camera" type="radio" value="1">マニュアル</label><br>
+					<label><input name="camera" type="radio" value="2">固定</label><br>
+				</td>
+				<td id="group">
+					移動<br>
+					<label><input name="move" type="radio" value="0">フルオート</label><br>
+					<label><input name="move" type="radio" value="1">ニュートラル</label><br>
+					<label><input name="move" type="radio" value="2">マニュアル</label><br>
+				</td>
+			</tr>
+			<tr>
+				<td id="group">
+					動作モード（再起動後に適用）<br>
+					<label><input name="light" type="radio" value="0">通常（デフォルト）</label><br>
+					<label><input name="light" type="radio" value="1">軽量モード</label><br>
+				</td>
+				<td id="group">
+					チュートリアル<br>
+					<label><input name="tutorial" type="radio" value="0">次回開始時に出す</label><br>
+					<label><input name="tutorial" type="radio" value="1">確認しない</label><br>
+				</td>
+			</tr>
+		</table>
+	</div>
+	
+	<div id="debugOut"></div>
+	<div id="MessageOut"></div>
+</div>
+
+
+</body></html>
