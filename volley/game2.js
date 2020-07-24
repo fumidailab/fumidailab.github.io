@@ -341,7 +341,7 @@ var texFiles = [
 	"./beach/Grass2.jpg",
 	"./beach/FarMountain.png",
 	"./beach/korokoro.png",
-	"./beach/milkyway.png",
+	"./beach/Milkyway.png",
 	"./beach/moon.png",
 	"./beach/Mountain01.png",
 	"./beach/Mountain02.png",
@@ -2010,7 +2010,7 @@ function LoadingUpdate(delta)
 		for(var i=0;i<2;i++) {
 			if(i == 1 && count3 < 10) continue;
 			var dir = (i==0)?-1:1;
-			var walk = walkUpdateTarget(i, dir*court_w/2, 0, 1.2, 2);
+			var walk = walkUpdateTarget(i, dir*court_w/2, 0, 1.2 * ((1.0/60)/delta), 2);
 			if(walk < 2) {
 				if(rotateUpdate(i, -dir*court_w, 0)) {
 					if(anim_user[i].stanby == 0) anim_user[i].stanby = 1;
