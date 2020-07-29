@@ -1,6 +1,6 @@
 "use strict";
 
-//Man to Spike! 未央とビーチバレー
+//ミツボシスパイク ～未央とビーチバレー～
 
 const debug = 0;
 const game_end_score = 10;	//ゲームセット点数
@@ -239,7 +239,7 @@ import { MMDLoader } from '../three.js-master/examples/jsm/loaders/MMDLoader.js'
 import { MMDAnimationHelper } from '../three.js-master/examples/jsm/animation/MMDAnimationHelper.js';
 import { OutlineEffect } from '../three.js-master/examples/jsm/effects/OutlineEffect.js';
 //import { MMDPhysics } from '../three.js-master/examples/jsm/animation/MMDPhysics.js';
-import { VRButton } from '../three.js-master/examples/jsm/webxr/VRButton.js';
+//import { VRButton } from '../three.js-master/examples/jsm/webxr/VRButton.js';
 //import { XRControllerModelFactory } from '../three.js-master/examples/jsm/webxr/XRControllerModelFactory.js';
 //import { Reflector } from '../three.js-master/examples/jsm/objects/Reflector.js';
 //import { CANNON } from '../three.js-master/examples/js/libs/cannon.js';
@@ -717,7 +717,7 @@ function init() {
 	
 	container.appendChild( renderer.domElement );
 	if(debug) {
-		stats = new Stats();
+//		stats = new Stats();
 //		container.appendChild( stats.dom );
 	}
 
@@ -1927,29 +1927,40 @@ function LoadingUpdate(delta)
 //		loadbox0 = null;
 		loadbox1 = null;
 		loadbox2 = null;
-		createTitle();
 		game_mode = -1;
 		scene.add(world_view);
 		load_seq++;
 
 		//タイトル準備
 		chrs = [player_mesh, chr_mesh];
-		if(debug < 3) {
-			anim_user[0].stanby = 15;
-			anim_user[1].vacation = 1;
-			stopAnimation();
+		if(game_view != 0) {
+			createTitle();
+			if(debug < 3) {
+				anim_user[0].stanby = 15;
+				anim_user[1].vacation = 1;
+				stopAnimation();
 
-			chr_mesh.position.copy(chair_pos);
-			chr_mesh.position.add(new THREE.Vector3(5.8, -4.8, -12.6));
+				chr_mesh.position.copy(chair_pos);
+				chr_mesh.position.add(new THREE.Vector3(5.8, -4.8, -12.6));
 
-			player_mesh.position.set(-41,-14,-187);
-			player_mesh.rotation.y = Math.PI;
+				player_mesh.position.set(-41,-14,-187);
+				player_mesh.rotation.y = Math.PI;
+			}
+
+			loadbox0.position.copy(chair_pos);
+			loadbox0.position.x += 0;
+			loadbox0.position.y += 6;
+			loadbox0.position.z += -29;
 		}
-
-		loadbox0.position.copy(chair_pos);
-		loadbox0.position.x += 0;
-		loadbox0.position.y += 6;
-		loadbox0.position.z += -29;
+		else {
+			//VRモードはすぐゲーム開始
+			load_seq = -1;
+			game_mode = MODE_BEGIN;
+			DispGameUI(true);
+			scene.remove(loadbox0);
+			loadbox0 = null;
+			resetGame(true);
+		}
 
 		obj_mesh[OBJ_SKYDOME].renderOrder += 0.1;
 		my_update(1/60);
@@ -2796,6 +2807,7 @@ function resetGame(flg)
 			attack : 0,		//アタック
 			vacation : 0,	//タイトル
 		};
+		faceReset(i);
 	}
 }
 
@@ -2988,7 +3000,7 @@ function shootToRandom(id) {
 	var not_cpu = (id == game_player && game_view == 1);
 	var level = not_cpu ? attack_hit : getCPULevel();
 	if(!not_cpu) {
-		console.log("cpu level:"+level);
+//		console.log("cpu level:"+level);
 	}
 
 	if(tutorial.enable && not_cpu && tutorial.step < 25) {
@@ -3030,8 +3042,8 @@ function shootToRandom(id) {
 					chance = 1;
 				}
 			}
-			//if(debug==2)
-			//chance = 1;	//debug
+			if(debug == 2 && id != game_player)
+				chance = 1;	//debug
 			if(chance) {
 				attack_next = 1;	//チャンスボール
 				level = 0;
@@ -4299,8 +4311,14 @@ function my_update(delta) {
 						anim_user[1].win = 1;
 					}
 					else if(score[0] >= game_end_score) {	//プレイヤーの勝ち
-						if(isVR)
+						if(game_view == 0)
 							anim_user[1].gohoubi = 1;
+						else if(score[1] == 0 && game_player == 0) {	//完封
+							anim_user[1].gohoubi = 1;
+							anim_user[1].regret = 0;
+							anim_user[1].win = 1;	//途中まで同じ動き
+							faceReset(1);
+						}
 						else
 							anim_user[0].win = 1;
 					}
@@ -4814,6 +4832,17 @@ function my_update(delta) {
 				}else{
 					next_camera.rate = 3.0;
 				}
+				break;
+			case 11:	//ごほうび
+				var len = chrs[0].position.distanceTo(chrs[1].position);
+				default_position = chrs[1-game_player].position.clone();
+				default_position.y += 15 + 1;
+				default_zoom = len / 4.0 / game_scale;
+				var xx = chrs[game_player].position.x - chrs[1-game_player].position.x;
+				var zz = chrs[game_player].position.z - chrs[1-game_player].position.z;
+				var yy = chrs[game_player].position.y - chrs[1-game_player].position.y -1;
+				default_rot_x = Math.atan2(-yy,len);
+				default_rot_y = Math.atan2(xx,zz);
 				break;
 			}
 			if(!cam_stop && getCameraMode() == 0) {
@@ -5473,7 +5502,7 @@ function PlayerUpdate(id) {
 			}
 		}
 		//CPUはとりあえずコートの中心に移動する
-		else {
+		else if(anim_user[id].win == 0) {
 			//コートの中心から外れていたら真ん中へ移動
 			if(chrs[id].position.z <  court_h*0.1
 			&& chrs[id].position.z > -court_h*0.1
@@ -5994,7 +6023,7 @@ function MotionUpdate(upd_count) {
 			}
 		}
 		//ごほうびモード推移
-		if(anim_user[id].gohoubi != 0) {
+		if(anim_user[id].gohoubi != 0 && game_view == 0) {
 			if(anim_user[id].gohoubi <= 2) {
 				//プレイヤーのもとに向かう
 				var rot = rotateUpdate(1, player_x, player_z, upd_count);
@@ -6022,35 +6051,41 @@ function MotionUpdate(upd_count) {
 			var l2 = 0;
 //			anim_user[id].run = 0;
 
-			if(anim_user[id].nade < 30) {
-				if(anim_user[id].nade > 30-10) {
-					l2 = (anim_user[id].nade-30)/10;
+			if(anim_user[id].nade < 20) {
+			}
+			else if(anim_user[id].nade < 50) {
+				if(anim_user[id].nade > 50-10) {
+					l2 = (anim_user[id].nade-50)/10;
 				}
+				//こっち向く
+				rotateUpdate(id, chrs[1-id].position.x, chrs[1-id].position.z);
 			}
-			else if(anim_user[id].nade < 60) {
-				l = (anim_user[id].nade-30)/30;
+			else if(anim_user[id].nade < 80) {
+				l = (anim_user[id].nade-50)/30;
 			}
-			else if(anim_user[id].nade < 300-30) {
+			else if(anim_user[id].nade < 320-30) {
 				l = 1;
 				l2 = 1;
 			}
 			else {
-				l = (300-anim_user[id].nade)/30;
-				if(anim_user[id].nade < 300-20) {
-					l2 = (280-anim_user[id].nade)/10;
+				l = (320-anim_user[id].nade)/30;
+				if(anim_user[id].nade < 320-20) {
+					l2 = (300-anim_user[id].nade)/10;
 				}
-				if(anim_user[id].nade >= 300) {
+				if(anim_user[id].nade >= 320) {
 //					anim_user[id].gohoubi = 5;	//終わり
 					anim_user[id].gohoubi = 3;	//終わり（後ずさり→投げキッス）
 					anim_user[id].nade = 1;
 				}
 			}
-			camera_y = camera_default_y - l*3;	//頭を下げる
-			playerOffset(0, -l*3, 0);
+			if(game_view == 0) {
+				camera_y = camera_default_y - l*3;	//頭を下げる
+				playerOffset(0, -l*3, 0);
 
-			function playerOffset(x,y,z) {
-				player_mesh.matrix.multiplyMatrices((new THREE.Matrix4()).makeTranslation(x,y,z),player_mesh.matrix);
-				player_mesh.updateMatrixWorld( true );
+				function playerOffset(x,y,z) {
+					player_mesh.matrix.multiplyMatrices((new THREE.Matrix4()).makeTranslation(x,y,z),player_mesh.matrix);
+					player_mesh.updateMatrixWorld( true );
+				}
 			}
 //			player_mesh.updateMatrixWorld( false );
 //			chrs[id].position.x = -12*(1-l) + (player_x+7)*l;
@@ -6172,10 +6207,18 @@ function MotionUpdate(upd_count) {
 			anim_user[id].nade = 0;
 		}*/
 		//なげキッス
+		/*if(load_seq == -1 && anim_user[id].gohoubi == 0 && id == 1) {
+			anim_user[id].gohoubi = 1;
+			anim_user[id].win = 1;
+			game_mode = -1;
+			faceReset(id);
+		}*/
 		if(anim_user[id].nade > 0 && anim_user[id].gohoubi == 3) {
 			var l1 = 0;
 			var l2 = 0;	//表情
 			var l3 = 0;	//腕
+//			chrs[id].morphTargetInfluences[19] = 0;
+			chrs[id].morphTargetInfluences[31] = 0;
 			if(anim_user[id].nade < 60) {
 				l1 = (anim_user[id].nade)/60;
 				l1 = Math.sin(l1*Math.PI/2);
@@ -6184,8 +6227,14 @@ function MotionUpdate(upd_count) {
 					anim_user[id].walk_back = 1;
 				}
 				//後ろ歩き＆横向き
-				chrs[id].rotation.y = (l1-1)*Math.PI/2;
-				walkUpdate(1, 0, 0.2);
+				if(game_view == 0) {
+					chrs[id].rotation.y = (l1-1)*Math.PI/2;
+					walkUpdate(id, 0, 0.2);
+				}
+				else {
+					chrs[id].rotation.y = (1-l1)*Math.PI*-1 + (l1 * -0.5 * Math.PI);
+					walkUpdate(id, Math.PI/2, 0.2);
+				}
 			}
 			else if(anim_user[id].nade < 100) {	//まち
 				if(anim_user[id].walk != 0) {
@@ -6203,21 +6252,31 @@ function MotionUpdate(upd_count) {
 				}
 			}
 			else if(anim_user[id].nade <= 130+60) {
-//				l1 = l2 = 1-Math.sin((anim_user[id].nade-180) / 60*Math.PI/2);
-				l1 = l2 = 1-((anim_user[id].nade-130) / 60);
 				if(chrs[id] == chr_mesh) {
 					chrs[id].morphTargetInfluences[23] = 0;		//う
 				}
+				if(game_view == 0) {
+	//				l1 = l2 = 1-Math.sin((anim_user[id].nade-180) / 60*Math.PI/2);
+					l1 = l2 = 1-((anim_user[id].nade-130) / 60);
 
-				//立ち去り
-				var rot = rotateUpdate(1, ball.position.x,ball.position.z, upd_count);
-				if(walkUpdateTarget(1, ball.position.x,ball.position.z, 1.0*upd_count) < 8 && rot) {
+					//立ち去り
+					var rot = rotateUpdate(1, ball.position.x,ball.position.z, upd_count);
+					if(walkUpdateTarget(1, ball.position.x,ball.position.z, 1.0*upd_count) < 8 && rot) {
+					}
+					if(anim_user[id].run == 0) anim_user[id].run = 1;
+					if(anim_user[id].nade >= 130+60) {
+						anim_user[id].gohoubi = 0;
+						anim_user[id].nade = 0;
+						resetGame(true);	//通常のゲームに戻る
+					}
 				}
-				if(anim_user[id].run == 0) anim_user[id].run = 1;
-				if(anim_user[id].nade >= 130+60) {
+				else {
+					l1 = l2 = 1;
 					anim_user[id].gohoubi = 0;
 					anim_user[id].nade = 0;
-					resetGame(true);	//通常のゲームに戻る
+					anim_user[id].winflg = 7;
+					chrs[1-id].visible = true;
+					chrs[id].morphTargetInfluences[11] = 0;	//ウインク消す
 				}
 			}
 			var bust = findBone(chrs[id],"上半身");
@@ -6245,7 +6304,7 @@ function MotionUpdate(upd_count) {
 			arm3.rotation.y += ( 6)*0.1;
 			arm3.rotation.z += ( 2*l1 + -21*l2)*0.1;
 
-			if(chrs[id] == chr_mesh) {
+			if(chrs[id] == chr_mesh && anim_user[id].nade > 0) {
 				//まゆ
 	//			chrs[id].morphTargetInfluences[0] *= 1-l2;
 	//			chrs[id].morphTargetInfluences[1] = l2;
@@ -6273,13 +6332,16 @@ function MotionUpdate(upd_count) {
 				}*/
 
 				var dir = (id==0) ? -1 : 1;
-				const range = 30;
+				var range = (anim_user[id].gohoubi != 0) ? 5 : 30;
 				var target_x;
 				var target_z;
-				if(anim_user[id].winflg != 2) {
+				if(anim_user[id].winflg == 6) {
+				}
+				else if(anim_user[id].winflg != 2) {
 					anim_user[id].win = 1;
 					switch(anim_user[id].winflg) {
 					case 0:	//コート外相手サイドへ
+					case 7:
 						target_x = 0;
 						target_z = court_h*1.3*dir;
 						break;
@@ -6289,6 +6351,7 @@ function MotionUpdate(upd_count) {
 						break;
 
 					case 4:	//センター
+					case 8:
 						target_x = court_w/2*dir;
 						target_z = 0;
 						break;
@@ -6307,9 +6370,19 @@ function MotionUpdate(upd_count) {
 							anim_user[id].win = 0;
 							resetGame(true);	//通常のゲームに戻る
 						}
+						if(anim_user[id].gohoubi != 0) {	//なでなで移行
+							if(anim_user[id].winflg == 2) {
+								anim_user[id].run_stop = 1;
+								anim_user[id].nade = 1;
+								anim_user[id].winflg = 6;
+								//特殊処理
+								chrs[1-id].visible = false;
+							}
+						}
 					}
 				}
 				else {
+					//ぐるぐる回る
 					/*if(adj_z != 0) {
 						anim_user[id].win = 1;
 						chrs[id].position.x = chrs[1-id].position.x;
@@ -6326,7 +6399,7 @@ function MotionUpdate(upd_count) {
 					if(anim_user[id].win >= range*12) anim_user[id].winflg++;
 				}
 			}
-			if(chrs[id] == chr_mesh) {
+			if(chrs[id] == chr_mesh && anim_user[id].gohoubi == 0 && anim_user[id].win > 0) {
 				chrs[id].morphTargetInfluences[0] = u;	//眉にこり
 				chrs[id].morphTargetInfluences[6] = d;	//眉てれ
 
@@ -6340,7 +6413,7 @@ function MotionUpdate(upd_count) {
 			}
 		}
 		//バンザイ
-		if(anim_user[id].joy > 0 || anim_user[id].win > 0) {
+		if(anim_user[id].joy > 0 || (anim_user[id].win > 0 && anim_user[id].gohoubi == 0)) {
 			
 			var d = 0;	//下げ
 			var u = 0;	//上げ
@@ -6847,7 +6920,7 @@ function MotionUpdate(upd_count) {
 			hand_par = anim_user[id].pickup/20;
 			if(hand_par > 0.95) hand_par = 0.95;
 		}
-		if(anim_user[id].nade > 0 && anim_user[id].gohoubi == 1) {
+		if(anim_user[id].nade > 0 /*&& anim_user[id].gohoubi == 1*/) {
 			hand_par = 0.9;
 		}
 		if(anim_user[id].nade > 0 && anim_user[id].gohoubi == 2) {
@@ -6943,7 +7016,13 @@ function MotionUpdate(upd_count) {
 		}
 	}
 }
-
+function faceReset(id) {
+	if(chrs[id] == chr_mesh) {
+		for(var i=0;i<chrs[id].morphTargetInfluences.length;i++) {
+			chrs[id].morphTargetInfluences[i] = 0;
+		}
+	}
+}
 //簡易関数
 function morphBoneRot(id, name, level, rx, ry, rz, no_add) {
 	var r = findBone(chrs[id],name).rotation;
@@ -7034,7 +7113,7 @@ function render() {
 		renderer.render(scene, camera);
 
 	if(debug) {
-		stats.update();
+//		stats.update();
 	}
 }
 function onWindowResize() {
@@ -7540,6 +7619,9 @@ function getCameraMode() {
 	}
 	if(tutorial.enable) {
 		return 0;
+	}
+	if(anim_user[1-game_player].winflg == 6) {	//なでなでされる
+		return 11;
 	}
 	return option.camera_mode;
 }
