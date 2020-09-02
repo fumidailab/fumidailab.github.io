@@ -175,7 +175,7 @@ var objFiles = [
 	"wall.pmx",
 	"sakura/sakura.pmx",
 //	"watch/watch1.pmx",
-	"marusofa/marusofa.pmx",
+	"marusofa/sofa.pmx",
 	"megane/megane.pmx",
 //	"sachiko/sachiko.pmx",
 ];
@@ -717,6 +717,8 @@ function my_update() {
 //		stopAnimation(chr_mesh);
 
 		//ソファの複製
+		obj_mesh[OBJ_SOFA].geometry.rotateY(Math.PI);
+		obj_mesh[OBJ_SOFA].geometry.translate(0,4.5,-2.2);
 		//ジオメトリが単一なのでコピペできるぽい
 		var sofa_set = new Array();
 		var clone_geo = obj_mesh[OBJ_SOFA].geometry.clone();
@@ -2525,7 +2527,8 @@ function my_update() {
 	obj_mesh[OBJ_SOFA].position.set(0,chr_default_y+6.5,chr_default_z-2.0);
 	obj_mesh[OBJ_SOFA].scale.y = 0.9;	//頭が当たらないよう下げる
 	obj_mesh[OBJ_SOFA].rotation.y=Math.PI;
-	obj_mesh[OBJ_SOFA].morphTargetInfluences[2] = 1.8;	//横長さ
+//	obj_mesh[OBJ_SOFA].morphTargetInfluences[2] = 1.8;	//横長さ
+	obj_mesh[OBJ_SOFA].scale.x = 2.5;	//横長さ
 
 	//白目の部分も回転させているのでよくないかもだが
 	if(eye_mesh[0].material.map != eye_texture[1]) {
