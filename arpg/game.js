@@ -2457,6 +2457,8 @@ function updateStage(stage_mesh) {
 
 		//Google Analytics
 		if(debug == 0) {
+			gtag('js', new Date());
+			gtag('config', 'GA_TRACKING_ID');
 			gtag('event', 'action',
 				{	'event_category': 'category',
 					'event_label': 'event_name',
