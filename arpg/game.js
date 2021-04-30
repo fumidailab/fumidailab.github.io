@@ -367,7 +367,7 @@ import { MMDAnimationHelper }	from '../three.js-master-0.126/examples/jsm/animat
 import Stats					from '../three.js-master-0.126/examples/jsm/libs/stats.module.js';
 import { CannonPhysics }		from './CannonPhysics.js';	//改造版
 
-import { Stage } from './Stage.js';
+import { Stage } from './stage.js';
 import { Battle } from './battle.js';
 import { Sound } from './sound.js';
 import { Menu } from './menu.js';
