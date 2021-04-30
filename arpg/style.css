@@ -1,0 +1,105 @@
+body {
+  margin: 0;
+}
+
+@media (environment-blending: additive) {
+  body { background-color: transparent; }
+}
+
+#overlay > #ui {
+	position: absolute;
+	z-index: 2;
+	right:10;
+	top:10;
+}
+
+#overlay > #ui > button {
+	position:relative;
+#	background: transparent;
+	background-color: rgba(0,0,0,0.5);
+	color: #ffffff;
+	outline: 1px solid #ffffff;
+	border: 0px;
+}
+
+#overlay > #window {
+#	display: none;
+	background-color: rgba(0,0,0,0.5);
+	outline: 3px solid #ffffff;
+
+	width:80%;
+	left:10%;
+	top:65%;
+#	right:10%;
+	bottom:5%;
+}
+#overlay > #window > #message {
+	position:relative;
+#	background: transparent;
+	color: #ffffff;
+	border: 0px;
+
+	font-size:200%;
+	font-weight:bolder;
+	text-shadow:2px 2px 2px #000000;
+
+	width:90%;
+	left:5%;
+	top:10%;
+	right:5%;
+	bottom:10%;
+}
+
+#overlay > button {
+	position:absolute;
+	background-color: rgba(224,224,255,0.9);
+	outline: 3px solid #ffffff;
+	text-align:center;
+	vertical-align:middle;
+
+	font-weight: bold;
+	font-size:large;
+	width:20%;
+	height:5%;
+	left:40%;
+}
+#overlay > #window > #option {
+	position:relative;
+	color: #ffffff;
+	border: 0px;
+
+	font-size:150%;
+	font-weight:bolder;
+	text-shadow:1px 1px 1px #000000;
+
+	width:90%;
+	left:5%;
+	top:0%;
+	bottom:5%;
+}
+
+#group {
+	background-color: rgba(192,255,192,0.5);
+	width:45%;
+}
+
+@media (max-width: 768px) {
+#overlay > #window > #message {
+	font-size:100%;
+}
+#overlay > #window > #option {
+	font-size:75%;
+}
+}
+@media screen and (orientation: portrait) {
+ td {
+  display: block;
+ }
+ #group {
+ 	width:90%;
+ }
+}
+
+#overlay > div {
+	position: absolute;
+
