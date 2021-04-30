@@ -3821,7 +3821,12 @@ function changeChara(next_chara) {
 								break;
 							}
 							else if(lst.name == "itembox" && hit && GameParam.user.status.event_flag["itembox_first"] == undefined) {
-								event.setMessage(["宝箱は攻撃すると開けることができます。\n回復アイテムのほか、武術・特技の書などが\n入っていることがあります。","メニューを開くとそのマップにある宝箱の回収率が表示されます。\nくまなく探してみましょう。"]);
+								event.setMessage([
+									"宝箱は攻撃すると開けることができます。\n"+
+									"回復アイテムのほか、武術・特技の書などが\n"+
+									"入っていることがあります。",
+									"メニューを開くとそのマップにある宝箱の回収率が\n"+
+									"表示されます。くまなく探してみましょう。"]);
 								GameParam.user.status.event_flag["itembox_first"] = true;
 							}
 							else if(lst.name == "itembox" && lst.open > 0) {
