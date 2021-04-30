@@ -1,5 +1,5 @@
 
-import * as THREE from '../three.js-master/build/three.module.js';
+//import * as THREE from '../three.js-master-0.126/build/three.module.js';
 import { Data } from './Data.js';
 
 const friend_name = [

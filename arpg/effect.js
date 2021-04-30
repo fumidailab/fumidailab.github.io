@@ -1,7 +1,7 @@
 
-import { LineMaterial } from '../three.js-master/examples/jsm/lines/LineMaterial.js';
-import { Wireframe } from '../three.js-master/examples/jsm/lines/Wireframe.js';
-import { WireframeGeometry2 } from '../three.js-master/examples/jsm/lines/WireframeGeometry2.js';
+import { LineMaterial } from '../three.js-master-0.126/examples/jsm/lines/LineMaterial.js';
+import { Wireframe } from '../three.js-master-0.126/examples/jsm/lines/Wireframe.js';
+import { WireframeGeometry2 } from '../three.js-master-0.126/examples/jsm/lines/WireframeGeometry2.js';
 
 var Effect = function (options) {
 	var scope = this;

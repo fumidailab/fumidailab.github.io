@@ -1,9 +1,9 @@
 
 //import * as THREE from '../three.js-master/build/three.module.js';
 import { Effect } from './effect.js';
-import { LineMaterial } from '../three.js-master/examples/jsm/lines/LineMaterial.js';
-import { Wireframe } from '../three.js-master/examples/jsm/lines/Wireframe.js';
-import { WireframeGeometry2 } from '../three.js-master/examples/jsm/lines/WireframeGeometry2.js';
+import { LineMaterial } from '../three.js-master-0.126/examples/jsm/lines/LineMaterial.js';
+import { Wireframe } from '../three.js-master-0.126/examples/jsm/lines/Wireframe.js';
+import { WireframeGeometry2 } from '../three.js-master-0.126/examples/jsm/lines/WireframeGeometry2.js';
 import { Data } from './Data.js';
 
 var debugRot = new THREE.Vector3();

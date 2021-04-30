@@ -3,8 +3,8 @@
 */
 
 //import { Ocean } from '../three.js-master/examples/jsm/misc/Ocean.js';
-import { Water } from '../three.js-master/examples/jsm/objects/Water.js';
-import { ImprovedNoise } from '../three.js-master/examples/jsm/math/ImprovedNoise.js';
+import { Water } from '../three.js-master-0.126/examples/jsm/objects/Water.js';
+import { ImprovedNoise } from '../three.js-master-0.126/examples/jsm/math/ImprovedNoise.js';
 import { Data } from './Data.js';
 
 

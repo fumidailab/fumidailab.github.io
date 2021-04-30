@@ -355,26 +355,17 @@ var fadeout_function = null;
 var fade_count = 0;
 
 //local
-import { LoadingManager } from '../three.js-master/src/loaders/LoadingManager.js';
-import { FileLoader } from '../three.js-master/src/loaders/FileLoader.js';
-import { MMDLoader } from '../three.js-master/examples/jsm/loaders/MMDLoader.js';
-import { FBXLoader } from '../three.js-master/examples/jsm/loaders/FBXLoader.js';
-import { GLTFLoader } from '../three.js-master/examples/jsm/loaders/GLTFLoader.js';
-//import { GLTFLoader } from 'https://unpkg.com/three@0.118.3/examples/js/loaders/GLTFLoader.js';
-import { XLoader } from '../three.js-master/examples/jsm/loaders/XLoader.js';
-import { OBJLoader } from '../three.js-master/examples/jsm/loaders/OBJLoader.js';
-//import { VRMLoader } from '../three.js-master/examples/jsm/loaders/VRMLoader.js';
-import { MMDAnimationHelper } from '../three.js-master/examples/jsm/animation/MMDAnimationHelper.js';
-//import { OutlineEffect } from '../three.js-master/examples/jsm/effects/OutlineEffect.js';
-//import { MMDPhysics } from '../three.js-master/examples/jsm/animation/MMDPhysics.js';
-//import { Reflector } from '../three.js-master/examples/jsm/objects/Reflector.js';
-//import { CANNON } from '../three.js-master/examples/js/libs/cannon.js';
-import { CannonPhysics } from './CannonPhysics.js';	//改造版
-//import { CCDIKSolver } from '../three.js-master/examples/jsm/animation/CCDIKSolver.js';
-import Stats from '../three.js-master/examples/jsm/libs/stats.module.js';
-//import { GUI } from '../three.js-master/examples/jsm/libs/dat.gui.module.js';
-//import { Lensflare, LensflareElement } from '../three.js-master/examples/jsm/objects/Lensflare.js';
-import { MTLLoader } from '../three.js-master/examples/jsm/loaders/MTLLoader.js';
+import { LoadingManager }		from '../three.js-master-0.126/src/loaders/LoadingManager.js';
+import { FileLoader }			from '../three.js-master-0.126/src/loaders/FileLoader.js';
+import { MMDLoader }			from '../three.js-master-0.126/examples/jsm/loaders/MMDLoader.js';
+import { FBXLoader }			from '../three.js-master-0.126/examples/jsm/loaders/FBXLoader.js';
+import { GLTFLoader }			from '../three.js-master-0.126/examples/jsm/loaders/GLTFLoader.js';
+import { XLoader }				from '../three.js-master-0.126/examples/jsm/loaders/XLoader.js';
+import { OBJLoader }			from '../three.js-master-0.126/examples/jsm/loaders/OBJLoader.js';
+import { MTLLoader }			from '../three.js-master-0.126/examples/jsm/loaders/MTLLoader.js';
+import { MMDAnimationHelper }	from '../three.js-master-0.126/examples/jsm/animation/MMDAnimationHelper.js';
+import Stats					from '../three.js-master-0.126/examples/jsm/libs/stats.module.js';
+import { CannonPhysics }		from './CannonPhysics.js';	//改造版
 
 import { Stage } from './Stage.js';
 import { Battle } from './battle.js';
@@ -396,7 +387,7 @@ var objInfo = [
 	{ name:"drop",		path:"model/drop.pmd",				visible:true, add:false },
 	{ name:"house",		path:"model/house1.pmd",			visible:true, add:false },
 
-	{ name:"skydome",	path:"stage/skydome.pmx",			visible:true, add:true  },
+	{ name:"skydome",	path:"model/skydome.pmx",			visible:true, add:true  },
 	{ name:"blade",		path:"model/blade/blade.pmx",		visible:false,add:false },
 	{ name:"cane",		path:"model/cane/cane.pmx",			visible:false,add:false },
 	{ name:"beam",		path:"model/beam.pmd",				visible:false,add:false },
@@ -437,7 +428,7 @@ var texFiles = [
 	"texture/circle.png",
 	"texture/break.png",
 	"texture/water.png",
-	"texture/waternormals.png",
+	"texture/waternormals.jpg",
 	"texture/fire.png",
 	"texture/shuriken.png",
 	"texture/thunder.png",
