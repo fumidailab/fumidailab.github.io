@@ -1,0 +1,50 @@
+<html>
+<title>可惜夜月vs花咲夜 -六花双輪-</title>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+1p&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@800&display=swap" rel="stylesheet">
+
+<!--link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&family=M+PLUS+1p:wght@400;700&display=swap" rel="stylesheet"-->
+
+<!--link type="text/css" rel="stylesheet" href="main.css"-->
+<link type="text/css" rel="stylesheet" href="style.css">
+
+<style>body{background:white;margin:0;padding:0;}</style>
+</head>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-19BWV307ME"></script>
+<script src="../three.js-master/build/three.js"></script>
+<script src="../cannon.js"></script>
+<script src="../three-vrm/lib/three-vrm.js"></script>
+<!--script src="../three.text-sprite/src/index.js"></script-->
+<!--script src="../three-ik/sample/index.js"></script-->
+<script>
+function loadScript() {
+	var script = document.createElement("script");
+	script.type = "module";
+	script.src = "game.js";
+//	script.src = "game.js?"+(new Date).getTime();
+	document.body.appendChild(script);
+}
+</script>
+
+<body onLoad="loadScript()">
+<div id="overlay">
+	<div id="ui">
+		<!--button id="Pause"></button-->
+		<button id="Sound"></button>
+		<button id="FullScreen" style="display:none">&#x26F6;</button>
+		<!--button id="Option">&#x2699;</button-->
+		<div id="ui_caption" style="font-size:x-small"><br></div>
+	</div>
+	<div id="debugOut"></div>
+</div>
+
+
+</body></html>
