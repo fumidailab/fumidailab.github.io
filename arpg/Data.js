@@ -459,7 +459,7 @@ const Data = {
 		{
 			name:"ヤマユリ谷",
 			mapno:4,
-			prev:-1,
+			prev:-2,
 			unlock:9,
 		},
 		{
