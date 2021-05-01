@@ -237,7 +237,7 @@ var UserData = function (options) {
 	function setAttack(chara, index, value) {
 		this.status.skill_assign[chara][index] = value;
 	}
-	const typeName = ["回復","特技の書","武術の書","武術の書","武術の書","素材"];
+	const typeName = ["回復","特技の書","武術の書／珠美","武術の書／あやめ","武術の書／歌鈴","素材"];
 
 	function getName(index, prefix) {
 		for(let i=0;i<Data.Item.length;i++) {
@@ -330,7 +330,7 @@ var UserData = function (options) {
 		return this.status.attack_assign[chara][i];
 	}
 	function setAttackAssign(chara, i, idx) {
-		this.status.attack_assign[chara][i] = idx;
+		this.status.attack_assign[chara][i] = Number(idx);
 	}
 	function setStatus(src, store) {
 		if(store)

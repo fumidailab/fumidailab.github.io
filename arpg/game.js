@@ -28,7 +28,7 @@ var GameParam = {
 	EncountArea : 14,	//敵エンカウント範囲
 	BattleArea  : 21,	//戦闘範囲
 	RecoverTime : 60*30,	//戦闘不能状態からの復帰時間
-	ComboLimit : 60,
+	ComboLimit : 150,
 	ArmorRecoverTime : 600,
 	FadeTime : 45,
 	Config : {
@@ -3642,7 +3642,8 @@ function changeChara(next_chara) {
 											"いわゆるスキルを上げるのに使うことができます。",
 
 											"「武術」は攻撃スキルです。\n"+
-											"ボタンに割り当てて使うことがきます。",
+											"ボタンに割り当てて使うことがきます。\n"+
+											"武術はキャラごとに固有になっています。",
 
 											"武術の中には「技力」、いわゆるMPのようなものを\n"+
 											"消費して使う武術もあります。\n"+
@@ -4823,7 +4824,8 @@ function EventStart_Map() {
 			"A","B","X","Y","LB","RB","LT","RT","OPTION","MENU","L3","R3",
 		],
 		"ps":[
-			"△","○","×","□","L2","R2","L1","R1","OPTION","SHARE","L3","R3",
+//			"△","○","×","□","L2","R2","L1","R1","OPTION","SHARE","L3","R3",
+			"×","○","□","△","L1","R1","L2","R2","SHARE","OPTION","L3","R3",
 		],
 	};
 	function Btn(name) {
@@ -5044,7 +5046,7 @@ function EventStart_TalkNPC(name)
 				{name:"talk", owner:"hotaru", text:["みなさん、お気をつけて…。"]},
 				]);
 		}
-		else if(event_flag["clear_boss3"] &&
+		else if(event_flag["clear_boss2"] &&
 			event_flag["hotaru_boss3clear"] == undefined) {
 			//紬 撃破後はじめてほたるに合う
 			event.start([

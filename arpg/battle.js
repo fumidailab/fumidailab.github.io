@@ -904,6 +904,10 @@ function getCharaFromDamageBody(body) {
 }
 
 function DamageHit(dmgBody, atkBody/*, offset*/, force, objname) {
+	if(GameParam.BattleMode == 0) {	//非戦闘時はヒットさせない
+		return;
+	}
+
 	let hit = false;
 	let attack_player;
 	let damage_player;
@@ -1078,6 +1082,7 @@ function DamageHit(dmgBody, atkBody/*, offset*/, force, objname) {
 			if(damage_player.sequence < SEQ_DAMAGE)
 				damage_player.damage_count = 0;
 			actionReset(damage_player);
+
 			if(damage_player.life <= 0) {
 				damage_player.sequence = SEQ_DEAD;
 				damage_player.life = 0;
@@ -5137,15 +5142,19 @@ function updatePersonal(player) {
 			}
 		}
 		//親指
-		findBone(obj,"J_Bip_R_Thumb1").rotation.set(-12/10,-3/10,5/10);
-		findBone(obj,"J_Bip_L_Thumb1").rotation.set(-12/10,3/10,-5/10);
-
 		if(is_weapon) {	//武器持ち手親指
 			findBone(obj,"J_Bip_R_Thumb1").rotation.set(-4/10,  5/10,0/10);
 			findBone(obj,"J_Bip_R_Thumb2").rotation.set( 3/10,-14/10,0/10);
 
 			findBone(obj,"J_Bip_L_Thumb1").rotation.set(-4/10, -5/10,0/10);
 			findBone(obj,"J_Bip_L_Thumb2").rotation.set( 3/10, 14/10,0/10);
+		}
+		else {
+			findBone(obj,"J_Bip_R_Thumb1").rotation.set(-12/10,-3/10,5/10);
+			findBone(obj,"J_Bip_R_Thumb2").rotation.set(0,0,0);
+
+			findBone(obj,"J_Bip_L_Thumb1").rotation.set(-12/10,3/10,-5/10);
+			findBone(obj,"J_Bip_L_Thumb2").rotation.set(0,0,0);
 		}
 	}
 
@@ -5195,7 +5204,8 @@ function updatePersonal(player) {
 					}
 					if(weapon_obj.name == "cane") {
 						mat0 = mat0.multiplyMatrices(mat0,(new THREE.Matrix4()).makeRotationX(-Math.PI/2));
-						mat0 = mat0.multiplyMatrices(mat0,(new THREE.Matrix4()).makeTranslation((1.8)/31,(-13-12*player.weapon_offset/15)/31,(-1)/31));
+//					mat0 = mat0.multiplyMatrices(mat0,(new THREE.Matrix4()).makeTranslation((1.8-0.5+adj2_x*0)/31,(adj2_y*0.1-13)/31,(adj2_z*0.1-1+0.6)/31));
+						mat0 = mat0.multiplyMatrices(mat0,(new THREE.Matrix4()).makeTranslation((1.3)/31,(-13-12*player.weapon_offset/15)/31,(-0.4)/31));
 						mat0 = mat0.multiplyMatrices(mat0,(new THREE.Matrix4()).makeRotationY(-Math.PI/2*player.weapon_offset/15));
 					}
 					if(weapon_obj.name == "club") {
