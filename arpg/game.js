@@ -404,15 +404,15 @@ var objInfo = [
 	{ name:"karin",		path:"vrm/karin.vrm",				visible:true, add:false },
 	{ name:"enemy00",	path:"vrm/enemy00.vrm",				visible:true, add:false },
 	{ name:"enemy10",	path:"vrm/enemy10.vrm",				visible:true, add:false },
-
-	{ name:"emily",		path:"vrm/emily.vrm",				visible:false,add:false },
-	{ name:"tsumugi",	path:"vrm/tsumugi.vrm",				visible:false,add:false },
-	{ name:"tomoka",	path:"vrm/tomoka.vrm",				visible:false,add:false },
-	{ name:"kumo",		path:"model/kumo.pmx",				visible:false,add:false },
-	{ name:"momoko",	path:"vrm/momoko.vrm",				visible:false,add:false },
-
-	{ name:"hotaru",	path:"vrm/hotaru.vrm",				visible:false,add:false },
 ];
+var objInfoExt = {
+	"emily"		: "vrm/emily.vrm",
+	"tsumugi"	: "vrm/tsumugi.vrm",
+	"tomoka"	: "vrm/tomoka.vrm",
+	"kumo"		: "model/kumo.pmx",
+	"momoko"	: "vrm/momoko.vrm",
+	"hotaru"	: "vrm/hotaru.vrm",
+};
 
 var tex_list = new Array();
 
@@ -1508,7 +1508,8 @@ function LoadingUpdate(delta)
 							}*/ ).then( ( vrm ) => {
 
 								// add the loaded vrm to the scene
-								org_vrm[obj_mesh.length] = vrm;
+								vrm.name = objInfo[obj_mesh.length].name;
+								org_vrm.push(vrm);
 								obj_mesh.push( vrm.scene );
 								convertVRMMaterial(vrm.scene, true);
 								vrm.materials = null;	//使わないので消す
@@ -1696,8 +1697,6 @@ function LoadingUpdate(delta)
 					GameParam.debug_obj1 = debug_obj1;
 					GameParam.debug_obj2 = debug_obj2;
 				}
-				setMaterialFogDisable(getMesh("skydome"), false);
-				getMesh("skydome").position.y -= 80;
 
 				//ロードが終わってからメッシュの追加
 				for(i=0;i<obj_mesh.length;i++) {
@@ -1708,6 +1707,8 @@ function LoadingUpdate(delta)
 					}
 				}
 
+				setMaterialFogDisable(getMesh("skydome"), false);
+				getMesh("skydome").position.y -= 80;
 
 				//戦闘・キャラ
 				btl = new Battle({
@@ -1830,10 +1831,9 @@ function LoadingUpdate(delta)
 				world_view.add(ctex_group);	//ones
 
 				//mmd_loader = null;
+				//vrm_loader = null;
 				fbx_loader = null;
-				vrm_loader = null;
 				x_loader = null;
-				vrm_loader = null;
 				obj_loader = null;
 				
 				GameParam.count = 0;
@@ -2086,7 +2086,14 @@ function updateStage(stage_mesh) {
 	if(GameParam.user.status.enemy_flag[ GameParam.user.status.mapno ] == undefined) {
 		GameParam.user.status.enemy_flag[ GameParam.user.status.mapno ] = [];
 	}
-	
+	if(GameParam.mesh.stage != null) {	//古いステージMeshはobj_meshからも完全消去
+		if(GameParam.mesh.stage != stage_mesh) {	//違うマップへの推移
+			const name = GameParam.mesh.stage.name;
+			for(let i=0;i<obj_mesh.length;i++) {
+				if(obj_mesh[i].name == name) obj_mesh.splice(i,1);
+			}
+		}
+	}
 	//古いmeshをremove
 	const remove_list = [
 		"terrain","leaf","weed","items","stage","snow","susuki",
@@ -3927,12 +3934,10 @@ function changeChara(next_chara) {
 		//VRMの更新(揺れもの)
 		if(GameParam.PerfMode != 0) {
 			for(let i=0;i<org_vrm.length;i++) {
-				if(org_vrm[i] != null) {
-					if(obj_mesh[i].name.indexOf("enemy") >= 0) continue;	//敵は固定
+				if(org_vrm[i].name.indexOf("enemy") >= 0) continue;	//敵は固定
 
-					obj_mesh[i].updateMatrixWorld(false);	//フレームが飛ぶと急な動きで揺れものがピクピクするのでVRM更新前に必要
-					org_vrm[i].update( 1.0/60.0 );
-				}
+				org_vrm[i].scene.updateMatrixWorld(false);	//フレームが飛ぶと急な動きで揺れものがピクピクするのでVRM更新前に必要
+				org_vrm[i].update( 1.0/60.0 );
 			}
 		}
 
@@ -4260,12 +4265,15 @@ function startMapMove(end_func) {
 	
 	//新しいマップを読み込む
 	function nextStage(data, mesh) {
-		GameParam.MapSizeX = data.SizeX;
-		GameParam.MapSizeZ = data.SizeZ;
+		GameParam.MapSizeX = Number(data.SizeX);
+		GameParam.MapSizeZ = Number(data.SizeZ);
 		stage.setTerrain(terrain_data = data.terrain);
 		updateStage(mesh);
 		end_func();
 		menu.quickSave();	//マップ移動直後の状態を保存
+		if(data.waterline && GameParam.mesh.water) {	//水面
+			GameParam.mesh.water.position.y = Number(data.waterline);
+		}
 		
 		//地名表記
 		setShortMessage(Data.LocationName[GameParam.user.status.mapno]);
@@ -4292,35 +4300,40 @@ function startMapMove(end_func) {
 			function(data) {
 
 				if(data.mesh_path) {
-					mmd_loader.load( "model/"+data.mesh_path, function ( mmd ) {
-						convertLambertMaterial(mmd,false);
-						if(data.mesh_path.indexOf("boss2")>= 0) {
-							mmd.scale.set(0.1,0.1*0.66,0.1);
-						}
-						else {
-							mmd.scale.set(0.1,0.1,0.1);
-						}
-						mmd.receiveShadow = true;
-						obj_mesh.push(mmd);
-
-						nextStage(data, mmd);
-
-						if(data.waterline) {
-							GameParam.mesh.water.position.y = data.waterline;
-						}
-						
+					let mmd = getMesh(data.mesh_path);
+					if(mmd != null && mmd.name == data.mesh_path) {
+						//読み込み済み（同じマップ間の移動）
+						loadEnd(data, function(){nextStage(data, mmd)});
 						resolve();
-					}, null,
-						//MMDの読み込み失敗したので戻る
-						function() {
-							prevStage();
+					}
+					else {
+						mmd_loader.load( "model/"+data.mesh_path, function ( mmd ) {
+							convertLambertMaterial(mmd,false);
+							if(data.mesh_path.indexOf("boss2")>= 0) {
+								mmd.scale.set(0.1,0.1*0.66,0.1);
+							}
+							else {
+								mmd.scale.set(0.1,0.1,0.1);
+							}
+							mmd.receiveShadow = true;
+							mmd.name = data.mesh_path;
+							obj_mesh.push(mmd);
+
+							loadEnd(data, function(){nextStage(data, mmd)});
+
 							resolve();
-						}
-					);
+						}, null,
+							//MMDの読み込み失敗したので戻る
+							function() {
+								prevStage();
+								resolve();
+							}
+						);
+					}
 				}
 				else {
 					//通常の推移
-					nextStage(data, null);
+					loadEnd(data, function(){nextStage(data, null)});
 					resolve();
 				}
 			},
@@ -4329,8 +4342,114 @@ function startMapMove(end_func) {
 			prevStage
 		);
 	});
+	//ステージ読み込みが終わった
+	//NPCとかがいれば読み込んだ後にnext_func
+	//いなければ即next_func
+	function loadEnd(data, next_func) {
+		const list = getExtCharaList(data.terrain, true);
+		let load_count = list.length;
+		for(let name of list) {
+			const path = objInfoExt[name];
+			new Promise(function(resolve, reject) {
+				load_progress = 0;
+				if(path.indexOf(".pmx") > 0
+				|| path.indexOf(".pmd") > 0) {
+					mmd_loader.load( path, function ( mmd ) {
+						switch(name) {
+						case "kumo":
+							helper.add( mmd, {
+								physics: false,
+								ik:true,
+							} );
+							convertLambertMaterial(mmd,true);
+							break;
+						default:
+							convertLambertMaterial(mmd,true);
+							break;
+						}
+						mmd.scale.set(0.1,0.1,0.1);
+						mmd.name = name;
+						mmd.visible = false;
+						obj_mesh.push(mmd);
+						if(--load_count <= 0) next_func();
+						resolve();
+					}, null, function(e){reject()} );
+				}
+				else if(path.indexOf(".vrm") > 0) {
+					
+					vrm_loader.load(
+
+						// URL of the VRM you want to load
+						path,
+
+						// called when the resource is loaded
+						( gltf ) => {
+							THREE.VRMUtils.removeUnnecessaryJoints( gltf.scene );
+
+							// generate a VRM instance from gltf
+							THREE.VRM.from( gltf ).then( ( vrm ) => {
+
+								// add the loaded vrm to the scene
+								vrm.name = vrm.scene.name = name;
+								org_vrm.push(vrm);
+								obj_mesh.push( vrm.scene );
+								convertVRMMaterial(vrm.scene, true);
+								vrm.materials = null;	//使わないので消す
+								vrm.scene.visible = false;
+
+								if(--load_count <= 0) next_func();
+								resolve();
+								use_vrm = true;
+
+							} );
+
+						},
+						null,
+						function(e){reject()}
+					);
+				}
+				else {
+					console.log("unknown filetype");
+				}
+			});
+		}
+		if(load_count == 0) next_func();
+	}
+
 }
 
+//マップに配置されたボスとNPCを列挙（モデル読み込み用）
+function getExtCharaList(terrain, load_without) {
+	let list = new Array();
+	
+	//同じキャラはいないはず
+	for(let i=0;i<terrain.length;i++) {
+		let name = null;
+		if(terrain[i].name == "enemy") {
+			let enemy_no = [
+				(terrain[i].item >>  8) & 0xff,
+				(terrain[i].item >> 16) & 0xff,
+				(terrain[i].item >> 24) & 0xff,
+			];
+			for (let no of enemy_no) {
+				if(no >= 40) {
+					name = btl.getEnemyName(no);
+				}
+			}
+		}
+		else if(terrain[i].name == "npc") {
+			const no = (terrain[i].item >> 8)&0xff;
+			if(no >= Data.NpcNoToName.length) {
+				continue;
+			}
+			name = Data.NpcNoToName[no];
+		}
+		if(name) {
+			if(!load_without || getMesh(name) == null) list.push(name);
+		}
+	}
+	return list;
+}
 
 //TextSprite
 const CTEX_W = 128;
@@ -4824,7 +4943,6 @@ function EventStart_Map() {
 			"A","B","X","Y","LB","RB","LT","RT","OPTION","MENU","L3","R3",
 		],
 		"ps":[
-//			"△","○","×","□","L2","R2","L1","R1","OPTION","SHARE","L3","R3",
 			"×","○","□","△","L1","R1","L2","R2","SHARE","OPTION","L3","R3",
 		],
 	};
@@ -5483,9 +5601,9 @@ function keyup(event)
 	}
 }
 function getMesh(name) {
-	for(let i=0;i<objInfo.length;i++) {
-		if(objInfo[i].name == name) return obj_mesh[i];
-	}
+//	for(let i=0;i<objInfo.length;i++) {
+//		if(objInfo[i].name == name) return obj_mesh[i];
+//	}
 	for(let i=0;i<obj_mesh.length;i++) {
 		if(obj_mesh[i].name == name) return obj_mesh[i];
 	}
@@ -5493,8 +5611,9 @@ function getMesh(name) {
 	return null;
 }
 function getVRM(name) {
-	for(let i=0;i<obj_mesh.length;i++) {
-		if(obj_mesh[i].name == name) return org_vrm[i];
+	for(let i=0;i<org_vrm.length;i++) {
+//		if(obj_mesh[i].name == name) return org_vrm[i];
+		if(org_vrm[i].name == name) return org_vrm[i];
 	}
 //	console.log("getVRM "+name+" not found.");
 	return null;

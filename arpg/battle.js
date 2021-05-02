@@ -740,18 +740,14 @@ function initChara(terrain, init) {
 		}
 	}
 	//NPCの登録
-	const npc_name = [
-		"hotaru","momoko",
-		"emily","tsumugi","tomoka","kumo",
-	];
 	for(let i=0;i<terrain.length;i++) {
 		if(terrain[i].name != "npc") continue;
 		
 		const no = (terrain[i].item >> 8)&0xff;
-		if(no >= npc_name.length) {
+		if(no >= Data.NpcNoToName.length) {
 			continue;
 		}
-		const name = npc_name[no];
+		const name = Data.NpcNoToName[no];
 		const mesh = GameParam.getMesh(name);
 		let chara = createCharaInfo(name, mesh);
 		chara.npc = true;

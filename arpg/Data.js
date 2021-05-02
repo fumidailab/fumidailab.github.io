@@ -624,6 +624,10 @@ const Data = {
 		"start",	//10
 		"move",		//11
 	],
+	NpcNoToName : [
+		"hotaru","momoko",
+		"emily","tsumugi","tomoka","kumo",
+	],
 };
 
 /*							武術			特技			敵		
