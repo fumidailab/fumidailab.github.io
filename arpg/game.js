@@ -1,8 +1,5 @@
 "use strict";
 
-//
-//import * as THREE from '../three.js-master/build/three.module.js';
-
 const debug = 0;
 /*
 	PerfMode
